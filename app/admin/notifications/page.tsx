@@ -1,15 +1,15 @@
-﻿'use client'
+'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { type SummerNotification } from '../../lib'
 
 const TYPE_ICON: Record<string, string> = {
-  lesson:  '套',
-  absence: '笶・,
-  late:    '竢ｰ',
-  makeup:  '売',
-  bug:     '肌',
+  lesson:  '📅',
+  absence: '❌',
+  late:    '⏰',
+  makeup:  '🔄',
+  bug:     '🔧',
 }
 
 const TYPE_COLOR: Record<string, string> = {
@@ -53,37 +53,36 @@ export default function SummerAdminNotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => router.push('/admin')} className="text-gray-400 text-xl px-1">窶ｹ</button>
+      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+        <button onClick={() => router.push('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
         <div className="flex-1">
-          <h1 className="text-base font-bold text-gray-800">騾夂衍荳隕ｧ</h1>
-          <p className="text-xs text-gray-400">螟乗悄隰帷ｿ・/p>
+          <h1 className="text-base font-bold text-gray-800">通知一覧</h1>
+          <p className="text-xs text-gray-400">夏期講習</p>
         </div>
         {unread > 0 && (
           <button onClick={markAllRead}
             className="text-xs text-blue-600 border border-blue-200 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors">
-            縺吶∋縺ｦ譌｢隱ｭ
+            すべて既読
           </button>
         )}
       </header>
 
-      <main className="px-4 md:px-6 py-4 max-w-3xl mx-auto space-y-3">
-
+      <main className="px-4 py-4 max-w-3xl mx-auto space-y-3">
         {unread > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 font-semibold text-center">
-            粕 譛ｪ遒ｺ隱阪・騾夂衍縺・{unread} 莉ｶ縺ゅｊ縺ｾ縺・          </div>
+            🔔 未確認の通知が {unread} 件あります
+          </div>
         )}
-
         {loading ? (
-          <div className="text-center text-gray-400 py-10">隱ｭ縺ｿ霎ｼ縺ｿ荳ｭ...</div>
+          <div className="text-center text-gray-400 py-10">読み込み中...</div>
         ) : notifs.length === 0 ? (
-          <div className="text-center text-gray-400 py-10">騾夂衍縺ｯ縺ゅｊ縺ｾ縺帙ｓ</div>
+          <div className="text-center text-gray-400 py-10">通知はありません</div>
         ) : (
           notifs.map(n => (
             <div key={n.id}
               className={`rounded-2xl border shadow-sm p-4 transition-colors ${n.is_read ? 'bg-white border-gray-100' : TYPE_COLOR[n.type] || 'bg-white border-gray-200'}`}>
               <div className="flex items-start gap-3">
-                <div className="text-xl flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] || '東'}</div>
+                <div className="text-xl flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] || '📌'}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className={`text-sm font-bold ${n.is_read ? 'text-gray-700' : 'text-gray-800'}`}>{n.title}</span>
@@ -95,7 +94,7 @@ export default function SummerAdminNotificationsPage() {
                 {!n.is_read && (
                   <button onClick={() => markRead(n.id)}
                     className="flex-shrink-0 text-xs bg-white border border-gray-200 text-gray-600 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
-                    譌｢隱ｭ
+                    既読
                   </button>
                 )}
               </div>
@@ -106,4 +105,3 @@ export default function SummerAdminNotificationsPage() {
     </div>
   )
 }
-

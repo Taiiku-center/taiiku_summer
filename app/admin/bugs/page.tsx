@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
@@ -31,22 +31,22 @@ export default function SummerAdminBugsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => router.push('/admin')} className="text-gray-400 text-xl px-1">窶ｹ</button>
+      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
+        <button onClick={() => router.push('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
         <div className="flex-1">
-          <h1 className="text-base font-bold text-gray-800">荳榊・蜷亥ｱ蜻贋ｸ隕ｧ</h1>
-          <p className="text-xs text-gray-400">螟乗悄隰帷ｿ・/p>
+          <h1 className="text-base font-bold text-gray-800">不具合報告一覧</h1>
+          <p className="text-xs text-gray-400">夏期講習</p>
         </div>
         {unread > 0 && (
-          <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{unread}莉ｶ 譛ｪ遒ｺ隱・/span>
+          <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{unread}件 未確認</span>
         )}
       </header>
 
-      <main className="px-4 md:px-6 py-4 max-w-3xl mx-auto space-y-3">
+      <main className="px-4 py-4 max-w-3xl mx-auto space-y-3">
         {loading ? (
-          <div className="text-center text-gray-400 py-10">隱ｭ縺ｿ霎ｼ縺ｿ荳ｭ...</div>
+          <div className="text-center text-gray-400 py-10">読み込み中...</div>
         ) : reports.length === 0 ? (
-          <div className="text-center text-gray-400 py-10">荳榊・蜷亥ｱ蜻翫・縺ゅｊ縺ｾ縺帙ｓ</div>
+          <div className="text-center text-gray-400 py-10">不具合報告はありません</div>
         ) : (
           reports.map(r => (
             <div key={r.id} className={`bg-white rounded-2xl border shadow-sm p-4 ${r.status === 'unread' ? 'border-red-200' : 'border-gray-100'}`}>
@@ -56,7 +56,7 @@ export default function SummerAdminBugsPage() {
                     <span className="font-bold text-gray-800 text-sm">{r.full_name}</span>
                     <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{r.screen_name}</span>
                     {r.status === 'unread' && (
-                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">譛ｪ遒ｺ隱・/span>
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">未確認</span>
                     )}
                   </div>
                   <p className="text-sm text-gray-700 leading-relaxed">{r.description}</p>
@@ -65,7 +65,7 @@ export default function SummerAdminBugsPage() {
                 {r.status === 'unread' && (
                   <button onClick={() => markRead(r.id)}
                     className="flex-shrink-0 text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap">
-                    遒ｺ隱肴ｸ医∩縺ｫ縺吶ｋ
+                    確認済みにする
                   </button>
                 )}
               </div>
@@ -76,4 +76,3 @@ export default function SummerAdminBugsPage() {
     </div>
   )
 }
-
