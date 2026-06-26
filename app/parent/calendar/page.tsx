@@ -64,130 +64,121 @@ export default function SummerCalendarPage() {
         </div>
       </header>
 
-      <main className="px-4 py-4 max-w-4xl mx-auto">
+      <main className="px-4 py-5 max-w-2xl mx-auto space-y-4">
         {loading ? (
-          <div className="text-center text-gray-400 py-10">読み込み中...</div>
-        ) : (
-          <div className="flex flex-col lg:flex-row gap-4 items-start">
-            <div className="lg:w-96 flex-shrink-0 space-y-4">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-                    className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">‹</button>
-                  <span className="text-sm font-bold text-gray-700">
-                    {viewMonth.getFullYear()}年{viewMonth.getMonth() + 1}月
-                  </span>
-                  <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-                    className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200">›</button>
-                </div>
-                <div className="grid grid-cols-7 mb-1">
-                  {['月','火','水','木','金','土','日'].map(d => (
-                    <div key={d} className="text-center text-xs text-gray-400 py-1">{d}</div>
-                  ))}
-                </div>
-                <div className="grid grid-cols-7 gap-0.5">
-                  {days.map((d, i) => {
-                    if (!d) return <div key={i} />
-                    const ds = toDateStr(d)
-                    const inS = inSummer(ds)
-                    const lCount = lessonsOn(ds).length
-                    const aCount = absencesOn(ds).length
-                    const isToday = ds === today
-                    const isSel = selectedDate === ds
-                    return (
-                      <button key={ds} disabled={!inS}
-                        onClick={() => setSelectedDate(isSel ? null : ds)}
-                        className={`relative py-2 rounded-xl text-sm font-medium transition-colors
-                          ${!inS ? 'text-gray-200' : ''}
-                          ${inS && !isSel && !isToday ? 'text-gray-600 hover:bg-gray-50' : ''}
-                          ${isToday && !isSel ? 'bg-blue-50 text-blue-600' : ''}
-                          ${isSel ? 'bg-blue-600 text-white' : ''}`}>
-                        {d.getDate()}
-                        {(lCount > 0 || aCount > 0) && (
-                          <div className="absolute bottom-0.5 left-0 right-0 flex justify-center gap-0.5">
-                            {lCount > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white' : 'bg-blue-500'}`} />}
-                            {aCount > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white' : 'bg-orange-400'}`} />}
-                          </div>
-                        )}
-                      </button>
-                    )
-                  })}
-                </div>
-                <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100">
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block" /> 申込あり
-                  </div>
-                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
-                    <span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" /> 欠席・遅刻連絡
-                  </div>
-                </div>
-              </div>
+          <div className="text-center text-gray-400 py-16">読み込み中...</div>
+        ) : (<>
+          {/* サマリー */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-blue-50 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-blue-600">{lessons.length}</div>
+              <div className="text-sm text-blue-500 mt-1">申込みコマ数</div>
+            </div>
+            <div className="bg-orange-50 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-orange-500">{absences.length}</div>
+              <div className="text-sm text-orange-400 mt-1">欠席・遅刻連絡</div>
+            </div>
+          </div>
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="text-sm font-semibold text-gray-700 mb-3">申込みサマリー</h2>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-blue-50 rounded-xl p-3 text-center">
-                    <div className="text-2xl font-bold text-blue-600">{lessons.length}</div>
-                    <div className="text-xs text-blue-500 mt-0.5">申込みコマ数</div>
-                  </div>
-                  <div className="bg-orange-50 rounded-xl p-3 text-center">
-                    <div className="text-2xl font-bold text-orange-500">{absences.length}</div>
-                    <div className="text-xs text-orange-400 mt-0.5">欠席・遅刻連絡</div>
-                  </div>
-                </div>
+          {/* カレンダー */}
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+            <div className="flex items-center justify-between mb-4">
+              <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
+                className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all">‹</button>
+              <span className="text-base font-bold text-gray-800">
+                {viewMonth.getFullYear()}年{viewMonth.getMonth() + 1}月
+              </span>
+              <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
+                className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all">›</button>
+            </div>
+            <div className="grid grid-cols-7 mb-2">
+              {['月','火','水','木','金','土','日'].map((d, i) => (
+                <div key={d} className={`text-center text-sm font-bold py-2 ${i===6?'text-red-500':i===5?'text-blue-500':'text-gray-400'}`}>{d}</div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {days.map((d, i) => {
+                if (!d) return <div key={i} />
+                const ds = toDateStr(d)
+                const inS = inSummer(ds)
+                const lCount = lessonsOn(ds).length
+                const aCount = absencesOn(ds).length
+                const isToday = ds === today
+                const isSel = selectedDate === ds
+                const dow = d.getDay()
+                return (
+                  <button key={ds} disabled={!inS}
+                    onClick={() => setSelectedDate(isSel ? null : ds)}
+                    className={`relative flex flex-col items-center justify-center py-3 rounded-xl text-sm font-medium transition-all active:scale-95
+                      ${!inS ? 'text-gray-200' : ''}
+                      ${inS && !isSel && !isToday ? (dow===0?'text-red-500 hover:bg-red-50':dow===6?'text-blue-500 hover:bg-blue-50':'text-gray-700 hover:bg-gray-100') : ''}
+                      ${isToday && !isSel ? 'bg-blue-50 text-blue-600' : ''}
+                      ${isSel ? 'bg-blue-600 text-white shadow-md' : ''}`}>
+                    <span className="text-base font-bold">{d.getDate()}</span>
+                    {(lCount > 0 || aCount > 0) && inS && (
+                      <div className="flex gap-0.5 mt-0.5">
+                        {lCount > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white' : 'bg-blue-500'}`} />}
+                        {aCount > 0 && <span className={`w-1.5 h-1.5 rounded-full ${isSel ? 'bg-white' : 'bg-orange-400'}`} />}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+            <div className="flex gap-5 mt-4 pt-4 border-t border-gray-100 justify-center">
+              <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                <span className="w-3 h-3 rounded-full bg-blue-500 inline-block" /> 申込あり
+              </div>
+              <div className="flex items-center gap-1.5 text-sm text-gray-500">
+                <span className="w-3 h-3 rounded-full bg-orange-400 inline-block" /> 欠席・遅刻連絡
               </div>
             </div>
+          </div>
 
-            <div className="flex-1 w-full">
-              {selectedDate ? (
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
-                  <h2 className="text-sm font-bold text-gray-700">
-                    {new Date(selectedDate + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
-                  </h2>
-                  {selectedLessons.length === 0 && selectedAbsences.length === 0 && (
-                    <p className="text-sm text-gray-400">この日は予定がありません</p>
-                  )}
-                  {selectedLessons.length > 0 && (
-                    <div>
-                      <div className="text-xs font-semibold text-blue-600 mb-2">📅 授業申込み</div>
-                      <div className="space-y-1.5">
-                        {selectedLessons.map(l => (
-                          <div key={l.id} className="flex items-center justify-between bg-blue-50 rounded-xl px-3 py-2.5">
-                            <span className="text-sm font-medium text-blue-700">{l.start_time}〜{l.end_time}</span>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium
-                              ${l.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-600'}`}>
-                              {l.status === 'confirmed' ? '確定' : '申込済'}
-                            </span>
-                          </div>
-                        ))}
+          {/* 選択日の詳細 */}
+          {selectedDate && (
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-3">
+              <h2 className="text-base font-bold text-gray-800">
+                {new Date(selectedDate + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
+              </h2>
+              {selectedLessons.length === 0 && selectedAbsences.length === 0 && (
+                <p className="text-sm text-gray-400">この日は予定がありません</p>
+              )}
+              {selectedLessons.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-blue-600 mb-2">📅 授業申込み</div>
+                  <div className="space-y-2">
+                    {selectedLessons.map(l => (
+                      <div key={l.id} className="flex items-center justify-between bg-blue-50 rounded-xl px-4 py-3">
+                        <span className="text-sm font-medium text-blue-700">{l.start_time}〜{l.end_time}</span>
+                        <span className={`text-xs px-2.5 py-1 rounded-full font-medium
+                          ${l.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-600'}`}>
+                          {l.status === 'confirmed' ? '確定' : '申込済'}
+                        </span>
                       </div>
-                    </div>
-                  )}
-                  {selectedAbsences.length > 0 && (
-                    <div>
-                      <div className="text-xs font-semibold text-orange-600 mb-2">📢 欠席・遅刻連絡</div>
-                      <div className="space-y-1.5">
-                        {selectedAbsences.map(a => (
-                          <div key={a.id} className="bg-orange-50 rounded-xl px-3 py-2.5">
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-sm font-semibold text-orange-700">{a.type}（{a.time}〜）</span>
-                              <span className="text-xs text-orange-500">振替：{a.make_up_request}</span>
-                            </div>
-                            {a.note && <p className="text-xs text-orange-600">{a.note}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+                    ))}
+                  </div>
                 </div>
-              ) : (
-                <div className="hidden lg:flex bg-white rounded-2xl border border-gray-100 shadow-sm p-8 items-center justify-center text-gray-400 text-sm h-48">
-                  左のカレンダーから日付を選んでください
+              )}
+              {selectedAbsences.length > 0 && (
+                <div>
+                  <div className="text-xs font-semibold text-orange-600 mb-2">📢 欠席・遅刻連絡</div>
+                  <div className="space-y-2">
+                    {selectedAbsences.map(a => (
+                      <div key={a.id} className="bg-orange-50 rounded-xl px-4 py-3">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-semibold text-orange-700">{a.type}（{a.time}〜）</span>
+                          <span className="text-xs text-orange-500">振替：{a.make_up_request}</span>
+                        </div>
+                        {a.note && <p className="text-xs text-orange-600">{a.note}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          </div>
-        )}
+          )}
+        </>)}
       </main>
     </div>
   )
