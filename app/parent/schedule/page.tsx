@@ -213,9 +213,9 @@ export default function SummerSchedulePage() {
                 return (
                   <div key={di}
                     data-ds={toDateStr(d)} data-slot={slot}
-                    onPointerDown={selectMode ? (e => onPointerDown(e, d, slot)) : undefined}
-                    onPointerMove={selectMode ? onPointerMove : undefined}
-                    onPointerUp={selectMode ? (e => onPointerUp(e, d, slot)) : undefined}
+                    onPointerDown={e => (selectMode || e.pointerType === 'mouse') ? onPointerDown(e, d, slot) : undefined}
+                    onPointerMove={e => (selectMode || e.pointerType === 'mouse') ? onPointerMove(e) : undefined}
+                    onPointerUp={e => (selectMode || e.pointerType === 'mouse') ? onPointerUp(e, d, slot) : undefined}
                     onClick={!selectMode ? (() => {
                       if (lesson) setCancelModal(lesson)
                       else if (inS) onTap(d, slot)
@@ -309,7 +309,20 @@ export default function SummerSchedulePage() {
         <div className="px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
           <h1 className="text-base font-bold text-gray-800">授業を申し込む</h1>
+          {view === 'week' && (
+            <button
+              onClick={() => setSelectMode(v => !v)}
+              className={`md:hidden ml-auto text-sm font-bold px-4 py-2 rounded-xl transition-colors
+                ${selectMode ? 'bg-blue-600 text-white' : 'bg-blue-50 text-blue-600 border-2 border-blue-200'}`}>
+              {selectMode ? '完了' : '複数選択'}
+            </button>
+          )}
         </div>
+        {selectMode && view === 'week' && (
+          <div className="md:hidden bg-blue-600 px-4 py-2 text-xs text-white text-center font-medium">
+            指をドラッグして複数コマを選べます
+          </div>
+        )}
       </header>
 
       <main className="max-w-4xl mx-auto px-3 py-4 space-y-4">
@@ -336,30 +349,6 @@ export default function SummerSchedulePage() {
           </div>
         )}
 
-        {/* 週ビューのみ：選択モード切替（モバイルのみ） */}
-        {view === 'week' && (
-          <div className="md:hidden">
-            {selectMode ? (
-              <div className="bg-blue-600 rounded-2xl px-4 py-3 flex items-center justify-between">
-                <div>
-                  <p className="text-white font-bold text-sm">ドラッグ選択中</p>
-                  <p className="text-blue-200 text-xs mt-0.5">指をドラッグして複数コマを選べます</p>
-                </div>
-                <button
-                  onClick={() => setSelectMode(false)}
-                  className="bg-white text-blue-600 font-bold text-sm px-4 py-2 rounded-xl active:opacity-80">
-                  完了
-                </button>
-              </div>
-            ) : (
-              <button
-                onClick={() => setSelectMode(true)}
-                className="w-full bg-white border-2 border-blue-200 text-blue-600 font-bold text-sm py-3 rounded-2xl active:bg-blue-50 flex items-center justify-center gap-2">
-                <span className="text-base">☰</span> 複数まとめて選ぶ
-              </button>
-            )}
-          </div>
-        )}
 
         {view === 'week' && <WeekGrid />}
         {view === 'month' && <MonthGrid />}
