@@ -186,7 +186,7 @@ export default function SummerSchedulePage() {
         onPointerLeave={() => { dragActive.current = false }}
         className="bg-white rounded-2xl shadow-sm overflow-x-auto select-none"
         style={{
-          touchAction: selectMode ? 'none' : 'auto',
+          touchAction: selectMode ? 'none' : 'pan-x pan-y',
           WebkitUserSelect: 'none', userSelect: 'none',
         }}>
         <div className="min-w-[400px]" style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)' }}>
@@ -336,27 +336,29 @@ export default function SummerSchedulePage() {
           </div>
         )}
 
-        {/* 週ビューのみ：選択モード切替 */}
+        {/* 週ビューのみ：選択モード切替（モバイルのみ） */}
         {view === 'week' && (
-          selectMode ? (
-            <div className="bg-blue-600 rounded-2xl px-4 py-3 flex items-center justify-between">
-              <div>
-                <p className="text-white font-bold text-sm">ドラッグ選択中</p>
-                <p className="text-blue-200 text-xs mt-0.5">指をドラッグして複数コマを選べます</p>
+          <div className="md:hidden">
+            {selectMode ? (
+              <div className="bg-blue-600 rounded-2xl px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-white font-bold text-sm">ドラッグ選択中</p>
+                  <p className="text-blue-200 text-xs mt-0.5">指をドラッグして複数コマを選べます</p>
+                </div>
+                <button
+                  onClick={() => setSelectMode(false)}
+                  className="bg-white text-blue-600 font-bold text-sm px-4 py-2 rounded-xl active:opacity-80">
+                  完了
+                </button>
               </div>
+            ) : (
               <button
-                onClick={() => setSelectMode(false)}
-                className="bg-white text-blue-600 font-bold text-sm px-4 py-2 rounded-xl active:opacity-80">
-                完了
+                onClick={() => setSelectMode(true)}
+                className="w-full bg-white border-2 border-blue-200 text-blue-600 font-bold text-sm py-3 rounded-2xl active:bg-blue-50 flex items-center justify-center gap-2">
+                <span className="text-base">☰</span> 複数まとめて選ぶ
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => setSelectMode(true)}
-              className="w-full bg-white border-2 border-blue-200 text-blue-600 font-bold text-sm py-3 rounded-2xl active:bg-blue-50 flex items-center justify-center gap-2">
-              <span className="text-base">☰</span> 複数まとめて選ぶ
-            </button>
-          )
+            )}
+          </div>
         )}
 
         {view === 'week' && <WeekGrid />}
