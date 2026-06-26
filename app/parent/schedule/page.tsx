@@ -24,10 +24,12 @@ export default function SummerSchedulePage() {
   const [saving, setSaving] = useState(false)
   const [msg, setMsg] = useState('')
   const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
-  const dragOn = useRef(false)
+
+  // ドラッグ選択用refs（長押し判定）
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const dragActive = useRef(false)
+  const startPos = useRef({ x: 0, y: 0 })
   const paintV = useRef(true)
-  const tDragging = useRef(false)
-  const painted = useRef(false)
 
   useEffect(() => {
     const s = getSession()
@@ -148,46 +150,64 @@ export default function SummerSchedulePage() {
     const wd = weekDates()
 
     function onPointerDown(e: React.PointerEvent, d: Date, slot: string) {
-      if (e.pointerType === 'touch') return
-      if (existingAt(d, slot)) return
+      if (!isInSummer(d)) return
+      startPos.current = { x: e.clientX, y: e.clientY }
       paintV.current = !selected.has(key(d, slot))
-      dragOn.current = true
-      paintCell(d, slot)
+      // ポインターキャプチャを即時設定（長押し判定のため）
+      ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+
+      longPressTimer.current = setTimeout(() => {
+        dragActive.current = true
+        const lesson = existingAt(d, slot)
+        if (!lesson) paintCell(d, slot)
+      }, 350)
     }
-    function onPointerEnter(e: React.PointerEvent, d: Date, slot: string) {
-      if (e.pointerType === 'touch' || !dragOn.current) return
-      paintCell(d, slot)
-    }
-    function onTouchStart(e: React.TouchEvent, d: Date, slot: string) {
-      painted.current = false
-      tDragging.current = true
-      if (existingAt(d, slot)) return
-      paintV.current = !selected.has(key(d, slot))
-    }
-    function onTouchMove(e: React.TouchEvent) {
-      if (!tDragging.current) return
-      const t = e.touches[0]
-      const el = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement | null
+
+    function onPointerMove(e: React.PointerEvent) {
+      const dx = e.clientX - startPos.current.x
+      const dy = e.clientY - startPos.current.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (!dragActive.current) {
+        // 指が動いた → スクロール判定、長押しキャンセル
+        if (dist > 8) {
+          if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
+          ;(e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId)
+        }
+        return
+      }
+
+      // ドラッグ選択モード：指の下のセルを塗る
+      const el = document.elementFromPoint(e.clientX, e.clientY) as HTMLElement | null
       const ds2 = el?.dataset.ds, slot2 = el?.dataset.slot
       if (!ds2 || !slot2) return
       const [y, mo, d2] = ds2.split('-').map(Number)
-      const dObj = new Date(y, mo - 1, d2)
-      if (existingAt(dObj, slot2)) return
-      painted.current = true
-      paintCell(dObj, slot2)
+      paintCell(new Date(y, mo - 1, d2), slot2)
     }
-    function onTouchEnd(e: React.TouchEvent, d: Date, slot: string) {
-      tDragging.current = false
-      if (!painted.current) toggleCell(d, slot)
-      painted.current = false
+
+    function onPointerUp(e: React.PointerEvent, d: Date, slot: string) {
+      if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
+
+      if (!dragActive.current) {
+        // 長押し未達 → タップ判定（ほとんど動いていない場合のみ）
+        const dx = e.clientX - startPos.current.x
+        const dy = e.clientY - startPos.current.y
+        if (Math.sqrt(dx * dx + dy * dy) < 8 && isInSummer(d)) {
+          toggleCell(d, slot)
+        }
+      }
+      dragActive.current = false
+    }
+
+    function onPointerCancel() {
+      if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null }
+      dragActive.current = false
     }
 
     return (
-      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto select-none"
-        onPointerUp={() => { dragOn.current = false }}
-        onPointerLeave={() => { dragOn.current = false }}
+      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto"
         onContextMenu={e => e.preventDefault()}
-        style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}>
+        style={{ WebkitUserSelect: 'none', userSelect: 'none' }}>
         <div className="min-w-[400px]" style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)' }}>
           <div className="border-b border-r border-gray-200" />
           {wd.map((d, i) => {
@@ -212,12 +232,10 @@ export default function SummerSchedulePage() {
                 return (
                   <div key={di}
                     data-ds={toDateStr(d)} data-slot={slot}
-                    onPointerDown={e => inS ? onPointerDown(e, d, slot) : undefined}
-                    onPointerEnter={e => inS ? onPointerEnter(e, d, slot) : undefined}
-                    onTouchStart={e => inS ? onTouchStart(e, d, slot) : undefined}
-                    onTouchMove={onTouchMove}
-                    onTouchEnd={e => inS ? onTouchEnd(e, d, slot) : undefined}
-                    onClick={() => { if (!inS || dragOn.current) return; if (lesson) setCancelModal(lesson) }}
+                    onPointerDown={e => onPointerDown(e, d, slot)}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={e => onPointerUp(e, d, slot)}
+                    onPointerCancel={onPointerCancel}
                     className={`border-b border-r border-gray-200 h-10 transition-colors
                       ${!inS ? 'bg-gray-50' :
                         lesson ? 'bg-teal-400 active:bg-teal-300 cursor-pointer' :
@@ -339,7 +357,9 @@ export default function SummerSchedulePage() {
 
         {view !== 'month' && (
           <p className="text-xs text-gray-400 text-center">
-            {view === 'week' ? 'タップで1コマ選択 / 長押しドラッグで連続選択' : 'タップで選択・変更'}
+            {view === 'week'
+              ? 'タップで1コマ選択 ／ 長押しドラッグで複数選択（スクロールは通常通り）'
+              : 'タップで選択・変更'}
           </p>
         )}
 
