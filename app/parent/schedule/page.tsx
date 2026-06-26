@@ -26,9 +26,10 @@ export default function SummerSchedulePage() {
   const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
   const [selectMode, setSelectMode] = useState(false)
 
-  const dragActive = useRef(false)
-  const paintV = useRef(true)
-  const startPos = useRef({ x: 0, y: 0 })
+  // ドラッグ選択用 refs（WeekGrid内で使用）
+  const dragActive       = useRef(false)
+  const paintV           = useRef(true)
+  const suppressNextClick = useRef(false) // PC: pointerDown後のonClickを抑制
 
   useEffect(() => {
     const s = getSession()
@@ -149,11 +150,27 @@ export default function SummerSchedulePage() {
     const wd = weekDates()
 
     function onPointerDown(e: React.PointerEvent, d: Date, slot: string) {
-      if (!isInSummer(d) || existingAt(d, slot)) return
-      startPos.current = { x: e.clientX, y: e.clientY }
-      paintV.current = !selected.has(key(d, slot))
-      dragActive.current = true
-      paintCell(d, slot)
+      if (!isInSummer(d)) return
+      const isMouse = e.pointerType === 'mouse'
+      const isTouch = !isMouse
+
+      if (isMouse) {
+        // PC：onClickを抑制してpointerイベントだけで処理
+        suppressNextClick.current = true
+        const lesson = existingAt(d, slot)
+        if (lesson) { setCancelModal(lesson); return }
+        paintV.current = !selected.has(key(d, slot))
+        dragActive.current = true
+        paintCell(d, slot)
+      } else if (isTouch && selectMode) {
+        // モバイル（選択モードON）：ドラッグ選択
+        const lesson = existingAt(d, slot)
+        if (lesson) return
+        paintV.current = !selected.has(key(d, slot))
+        dragActive.current = true
+        paintCell(d, slot)
+      }
+      // モバイル（選択モードOFF）：onClickに任せる
     }
 
     function onPointerMove(e: React.PointerEvent) {
@@ -165,16 +182,16 @@ export default function SummerSchedulePage() {
       paintCell(new Date(y, mo - 1, d2), slot2)
     }
 
-    function onPointerUp(e: React.PointerEvent, d: Date, slot: string) {
-      if (!dragActive.current) return
+    function onPointerUp() {
       dragActive.current = false
-      const dx = e.clientX - startPos.current.x
-      const dy = e.clientY - startPos.current.y
-      // ほぼ動かなかった場合はtoggle（paintCellが既に1回呼ばれているので何もしない）
-      void (dx + dy)
     }
 
-    function onTap(d: Date, slot: string) {
+    // onClickはモバイル（selectModeOFF）のタップのみ担当
+    function handleClick(d: Date, slot: string) {
+      if (suppressNextClick.current) {
+        suppressNextClick.current = false
+        return // PCのpointerDownが処理済みなのでスキップ
+      }
       if (!isInSummer(d)) return
       toggleCell(d, slot)
     }
@@ -182,10 +199,11 @@ export default function SummerSchedulePage() {
     return (
       <div
         onContextMenu={e => e.preventDefault()}
-        onPointerUp={() => { dragActive.current = false }}
-        onPointerLeave={() => { dragActive.current = false }}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
         className="bg-white rounded-2xl shadow-sm overflow-x-auto select-none"
         style={{
+          // selectModeON（モバイルドラッグ）はスクロール禁止、それ以外は縦横スクロール許可
           touchAction: selectMode ? 'none' : 'pan-x pan-y',
           WebkitUserSelect: 'none', userSelect: 'none',
         }}>
@@ -213,13 +231,10 @@ export default function SummerSchedulePage() {
                 return (
                   <div key={di}
                     data-ds={toDateStr(d)} data-slot={slot}
-                    onPointerDown={e => (selectMode || e.pointerType === 'mouse') ? onPointerDown(e, d, slot) : undefined}
-                    onPointerMove={e => (selectMode || e.pointerType === 'mouse') ? onPointerMove(e) : undefined}
-                    onPointerUp={e => (selectMode || e.pointerType === 'mouse') ? onPointerUp(e, d, slot) : undefined}
-                    onClick={!selectMode ? (() => {
-                      if (lesson) setCancelModal(lesson)
-                      else if (inS) onTap(d, slot)
-                    }) : undefined}
+                    onPointerDown={e => onPointerDown(e, d, slot)}
+                    onPointerMove={onPointerMove}
+                    onPointerUp={onPointerUp}
+                    onClick={() => handleClick(d, slot)}
                     className={`border-b border-r border-gray-200 h-10 transition-colors
                       ${!inS ? 'bg-gray-50' :
                         lesson ? 'bg-teal-400 active:bg-teal-300 cursor-pointer' :
@@ -309,6 +324,7 @@ export default function SummerSchedulePage() {
         <div className="px-4 py-3 flex items-center gap-3">
           <button onClick={() => router.back()} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
           <h1 className="text-base font-bold text-gray-800">授業を申し込む</h1>
+          {/* モバイルのみ：週ビューで複数選択ボタンをヘッダーに固定 */}
           {view === 'week' && (
             <button
               onClick={() => setSelectMode(v => !v)}
@@ -341,14 +357,12 @@ export default function SummerSchedulePage() {
           <button onClick={navigateNext} className="bg-gray-100 px-3 py-2 rounded-xl text-sm font-bold active:bg-gray-200">→</button>
         </div>
 
-        {/* 凡例 */}
         {view !== 'month' && (
           <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
             <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-blue-400 rounded" />選択中</div>
             <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-teal-400 rounded" />申込済（タップで変更・キャンセル）</div>
           </div>
         )}
-
 
         {view === 'week' && <WeekGrid />}
         {view === 'month' && <MonthGrid />}
