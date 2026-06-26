@@ -1,26 +1,33 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, type SummerLesson, type SummerStudent } from '../../lib'
 
-const AM_SLOTS = TIME_SLOTS.filter(s => s.startsWith('10') || s.startsWith('11'))
-const PM_SLOTS = TIME_SLOTS.filter(s => !s.startsWith('10') && !s.startsWith('11'))
-const DOW = ['月','火','水','木','金','土','日']
+const DAYS_JP = ['月', '火', '水', '木', '金', '土', '日']
+
+function getMondayOf(d: Date) {
+  const dow = d.getDay()
+  const diff = dow === 0 ? -6 : 1 - dow
+  const m = new Date(d); m.setDate(d.getDate() + diff); m.setHours(0,0,0,0); return m
+}
+
+type View = 'month' | 'week' | 'day'
 
 export default function SummerSchedulePage() {
   const router = useRouter()
-  const [student, setStudent]     = useState<SummerStudent | null>(null)
-  const [weekStart, setWeekStart] = useState<Date>(() => {
-    const d = new Date()
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
-    return d
-  })
-  const [selectedDate, setSelectedDate]   = useState<string>('')
-  const [selectedSlots, setSelectedSlots] = useState<Set<string>>(new Set())
-  const [existingLessons, setExistingLessons] = useState<SummerLesson[]>([])
-  const [submitting, setSubmitting] = useState(false)
-  const [done, setDone]             = useState(false)
+  const [student, setStudent] = useState<SummerStudent | null>(null)
+  const [existing, setExisting] = useState<SummerLesson[]>([])
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [view, setView] = useState<View>('week')
+  const [current, setCurrent] = useState(new Date())
+  const [saving, setSaving] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
+  const dragOn = useRef(false)
+  const paintV = useRef(true)
+  const tDragging = useRef(false)
+  const painted = useRef(false)
 
   useEffect(() => {
     const s = getSession()
@@ -28,172 +35,355 @@ export default function SummerSchedulePage() {
     setStudent(s)
   }, [router])
 
-  useEffect(() => { if (student) fetchLessons() }, [student, weekStart])
+  useEffect(() => { if (student) fetchExisting() }, [student, view, current])
 
-  async function fetchLessons() {
+  async function fetchExisting() {
     if (!student) return
     const supabase = createClient()
-    const end = new Date(weekStart); end.setDate(end.getDate() + 6)
-    const { data } = await supabase
-      .from('summer_lessons').select('*')
-      .eq('student_id', student.id)
-      .gte('date', toDateStr(weekStart)).lte('date', toDateStr(end))
-      .neq('status', 'cancelled')
-    setExistingLessons(data || [])
+    let from: string, to: string
+    if (view === 'month') {
+      from = toDateStr(new Date(current.getFullYear(), current.getMonth(), 1))
+      to   = toDateStr(new Date(current.getFullYear(), current.getMonth() + 1, 0))
+    } else {
+      const mon = getMondayOf(current)
+      from = toDateStr(mon)
+      const sun = new Date(mon); sun.setDate(mon.getDate() + 6)
+      to = toDateStr(sun)
+    }
+    const { data } = await supabase.from('summer_lessons')
+      .select('*').eq('student_id', student.id).neq('status', 'cancelled')
+      .gte('date', from).lte('date', to)
+    setExisting(data || [])
+    setSelected(new Set())
   }
 
-  function weekDates(): Date[] {
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(weekStart); d.setDate(d.getDate() + i); return d
-    })
+  function existingAt(dateObj: Date, slot: string) {
+    const ds = toDateStr(dateObj)
+    return existing.find(l => l.date === ds && l.start_time === slot)
   }
 
-  function isInSummer(d: Date) { const s = toDateStr(d); return s >= SUMMER_START && s <= SUMMER_END }
-  function isBooked(slot: string) { return existingLessons.some(l => l.date === selectedDate && l.start_time === slot) }
-
-  function toggleSlot(slot: string) {
-    if (isBooked(slot)) return
-    setSelectedSlots(prev => { const n = new Set(prev); n.has(slot) ? n.delete(slot) : n.add(slot); return n })
+  async function cancelLesson(id: string) {
+    const supabase = createClient()
+    setExisting(prev => prev.filter(l => l.id !== id))
+    setCancelModal(null)
+    await supabase.from('summer_lessons').delete().eq('id', id)
+    setMsg('キャンセルしました。新しい日時を選んで申込めます')
+    setTimeout(() => setMsg(''), 4000)
   }
 
   async function handleSubmit() {
-    if (!student || selectedSlots.size === 0 || !selectedDate) return
-    setSubmitting(true)
+    if (!student || selected.size === 0) return
+    setSaving(true)
     const supabase = createClient()
-    const records = Array.from(selectedSlots).sort().map(slot => ({
-      student_id: student.id, full_name: student.full_name,
-      date: selectedDate, start_time: slot, end_time: endTime(slot), status: 'pending',
-    }))
-    await supabase.from('summer_lessons').insert(records)
-    await supabase.from('summer_notifications').insert({
-      type: 'lesson', title: '新しい授業申込みがありました',
-      message: `${student.full_name}（${selectedDate}）${records.length}コマ`, is_read: false,
+    const rows = Array.from(selected).map(k => {
+      const sep = k.indexOf('__')
+      const ds = k.slice(0, sep), slot = k.slice(sep + 2)
+      return { student_id: student.id, full_name: student.full_name, date: ds, start_time: slot, end_time: endTime(slot), status: 'pending' }
     })
-    setDone(true); setSubmitting(false); setSelectedSlots(new Set())
-    await fetchLessons()
-    setTimeout(() => setDone(false), 3000)
+    const { error } = await supabase.from('summer_lessons').insert(rows)
+    if (!error) {
+      await supabase.from('summer_notifications').insert({
+        type: 'lesson', title: '新しい授業申込みがありました',
+        message: `${student.full_name}（${rows.length}コマ）`, is_read: false,
+      })
+    }
+    setSaving(false)
+    setMsg(error ? '申込みに失敗しました。再度お試しください。' : '申込みました')
+    await fetchExisting()
+    setTimeout(() => setMsg(''), 4000)
+  }
+
+  function key(dateObj: Date, slot: string) { return `${toDateStr(dateObj)}__${slot}` }
+
+  function toggleCell(dateObj: Date, slot: string) {
+    const lesson = existingAt(dateObj, slot)
+    if (lesson) { setCancelModal(lesson); return }
+    const k = key(dateObj, slot)
+    setSelected(prev => { const n = new Set(prev); n.has(k) ? n.delete(k) : n.add(k); return n })
+  }
+
+  function paintCell(dateObj: Date, slot: string) {
+    if (existingAt(dateObj, slot)) return
+    const k = key(dateObj, slot)
+    setSelected(prev => { const n = new Set(prev); paintV.current ? n.add(k) : n.delete(k); return n })
+  }
+
+  function navigatePrev() {
+    setCurrent(d => {
+      const n = new Date(d)
+      if (view === 'month') n.setMonth(n.getMonth() - 1)
+      else if (view === 'week') n.setDate(n.getDate() - 7)
+      else n.setDate(n.getDate() - 1)
+      return n
+    })
+  }
+  function navigateNext() {
+    setCurrent(d => {
+      const n = new Date(d)
+      if (view === 'month') n.setMonth(n.getMonth() + 1)
+      else if (view === 'week') n.setDate(n.getDate() + 7)
+      else n.setDate(n.getDate() + 1)
+      return n
+    })
+  }
+
+  function weekDates() {
+    const mon = getMondayOf(current)
+    return DAYS_JP.map((_, i) => { const d = new Date(mon); d.setDate(mon.getDate() + i); return d })
+  }
+
+  function isInSummer(d: Date) { const s = toDateStr(d); return s >= SUMMER_START && s <= SUMMER_END }
+
+  function displayTitle() {
+    const wd = weekDates()
+    if (view === 'month') return `${current.getFullYear()}年${current.getMonth() + 1}月`
+    if (view === 'week') return `${wd[0].getMonth()+1}/${wd[0].getDate()} 〜 ${wd[6].getMonth()+1}/${wd[6].getDate()}`
+    const dow = ['日','月','火','水','木','金','土'][current.getDay()]
+    return `${current.getMonth()+1}/${current.getDate()}（${dow}）`
   }
 
   if (!student) return null
 
-  const weekDays = weekDates()
-  const today    = toDateStr(new Date())
+  const WeekGrid = () => {
+    const wd = weekDates()
 
-  const SlotBtn = ({ slot }: { slot: string }) => {
-    const booked = isBooked(slot)
-    const sel    = selectedSlots.has(slot)
+    function onPointerDown(e: React.PointerEvent, d: Date, slot: string) {
+      if (e.pointerType === 'touch') return
+      if (existingAt(d, slot)) return
+      paintV.current = !selected.has(key(d, slot))
+      dragOn.current = true
+      paintCell(d, slot)
+    }
+    function onPointerEnter(e: React.PointerEvent, d: Date, slot: string) {
+      if (e.pointerType === 'touch' || !dragOn.current) return
+      paintCell(d, slot)
+    }
+    function onTouchStart(e: React.TouchEvent, d: Date, slot: string) {
+      painted.current = false
+      tDragging.current = true
+      if (existingAt(d, slot)) return
+      paintV.current = !selected.has(key(d, slot))
+    }
+    function onTouchMove(e: React.TouchEvent) {
+      if (!tDragging.current) return
+      const t = e.touches[0]
+      const el = document.elementFromPoint(t.clientX, t.clientY) as HTMLElement | null
+      const ds2 = el?.dataset.ds, slot2 = el?.dataset.slot
+      if (!ds2 || !slot2) return
+      const [y, mo, d2] = ds2.split('-').map(Number)
+      const dObj = new Date(y, mo - 1, d2)
+      if (existingAt(dObj, slot2)) return
+      painted.current = true
+      paintCell(dObj, slot2)
+    }
+    function onTouchEnd(e: React.TouchEvent, d: Date, slot: string) {
+      tDragging.current = false
+      if (!painted.current) toggleCell(d, slot)
+      painted.current = false
+    }
+
     return (
-      <button disabled={booked} onClick={() => toggleSlot(slot)}
-        className={`h-12 sm:h-14 rounded-xl text-sm font-bold transition-all active:scale-95 hover:scale-[1.02]
-          ${booked ? 'bg-gray-100 text-gray-300 cursor-not-allowed' : ''}
-          ${!booked && sel ? 'bg-blue-600 text-white shadow-md' : ''}
-          ${!booked && !sel ? 'bg-gray-50 text-gray-700 border-2 border-gray-200 hover:border-blue-400 hover:bg-blue-50' : ''}
-        `}>
-        {booked ? '申込済' : slot}
-      </button>
+      <div className="bg-white rounded-2xl shadow-sm overflow-x-auto select-none"
+        onPointerUp={() => { dragOn.current = false }}
+        onPointerLeave={() => { dragOn.current = false }}
+        onContextMenu={e => e.preventDefault()}
+        style={{ touchAction: 'none', WebkitUserSelect: 'none', userSelect: 'none' }}>
+        <div className="min-w-[400px]" style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)' }}>
+          <div className="border-b border-r border-gray-200" />
+          {wd.map((d, i) => {
+            const inS = isInSummer(d)
+            return (
+              <div key={i} className={`border-b border-r border-gray-200 py-2 text-center text-xs font-bold leading-tight
+                ${i===6?'text-red-500':i===5?'text-blue-500':'text-gray-600'}
+                ${!inS ? 'opacity-30' : ''}`}>
+                {DAYS_JP[i]}<br/><span className="font-normal text-gray-400">{d.getMonth()+1}/{d.getDate()}</span>
+              </div>
+            )
+          })}
+          {TIME_SLOTS.map(slot => (
+            <div key={slot} className="contents">
+              <div className="border-b border-r border-gray-200 flex items-center justify-end pr-1.5 text-xs text-gray-400 h-10 whitespace-nowrap">
+                {slot}
+              </div>
+              {wd.map((d, di) => {
+                const lesson = existingAt(d, slot)
+                const sel = selected.has(key(d, slot))
+                const inS = isInSummer(d)
+                return (
+                  <div key={di}
+                    data-ds={toDateStr(d)} data-slot={slot}
+                    onPointerDown={e => inS ? onPointerDown(e, d, slot) : undefined}
+                    onPointerEnter={e => inS ? onPointerEnter(e, d, slot) : undefined}
+                    onTouchStart={e => inS ? onTouchStart(e, d, slot) : undefined}
+                    onTouchMove={onTouchMove}
+                    onTouchEnd={e => inS ? onTouchEnd(e, d, slot) : undefined}
+                    onClick={() => { if (!inS || dragOn.current) return; if (lesson) setCancelModal(lesson) }}
+                    className={`border-b border-r border-gray-200 h-10 transition-colors
+                      ${!inS ? 'bg-gray-50' :
+                        lesson ? 'bg-teal-400 active:bg-teal-300 cursor-pointer' :
+                        sel ? 'bg-blue-400 cursor-pointer' :
+                        'hover:bg-blue-50 active:bg-blue-100 cursor-pointer'}`}
+                  />
+                )
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
     )
   }
 
-  const CalendarPanel = () => (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6">
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate()-7); setWeekStart(d); setSelectedDate(''); setSelectedSlots(new Set()) }}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all">‹</button>
-        <span className="text-sm font-bold text-gray-700">
-          {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} 〜 {weekDays[6].getMonth()+1}/{weekDays[6].getDate()}
-        </span>
-        <button onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate()+7); setWeekStart(d); setSelectedDate(''); setSelectedSlots(new Set()) }}
-          className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all">›</button>
+  const MonthGrid = () => {
+    const y = current.getFullYear(), m = current.getMonth()
+    const first = new Date(y, m, 1), last = new Date(y, m+1, 0)
+    const startDow = first.getDay() === 0 ? 6 : first.getDay() - 1
+    const submittedDates = new Set(existing.map(l => l.date))
+    const cells: (Date|null)[] = Array.from({ length: Math.ceil((startDow + last.getDate()) / 7) * 7 }, (_, i) => {
+      const n = i - startDow + 1
+      return n < 1 || n > last.getDate() ? null : new Date(y, m, n)
+    })
+    return (
+      <div className="bg-white rounded-2xl shadow-sm p-4">
+        <div className="grid grid-cols-7 mb-1">
+          {['月','火','水','木','金','土','日'].map((d, i) => (
+            <div key={d} className={`text-center text-xs font-bold py-2 ${i===6?'text-red-500':i===5?'text-blue-500':'text-gray-500'}`}>{d}</div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {cells.map((d, i) => {
+            if (!d) return <div key={i} />
+            const ds = toDateStr(d), has = submittedDates.has(ds)
+            const inS = isInSummer(d)
+            const isToday = ds === toDateStr(new Date()), dow = d.getDay()
+            return (
+              <button key={i} disabled={!inS} onClick={() => { if (inS) { setCurrent(d); setView('week') } }}
+                className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors
+                  ${!inS ? 'text-gray-200' : isToday ? 'bg-blue-600 text-white' :
+                    dow===0 ? 'text-red-500 hover:bg-red-50' :
+                    dow===6 ? 'text-blue-500 hover:bg-blue-50' :
+                    'text-gray-700 hover:bg-gray-100'}`}>
+                {d.getDate()}
+                {has && inS && <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isToday ? 'bg-white' : 'bg-teal-500'}`} />}
+              </button>
+            )
+          })}
+        </div>
+        {submittedDates.size > 0 && (
+          <p className="text-xs text-gray-400 mt-3 text-center">● = 申込み済みの日　タップで週ビューに移動</p>
+        )}
       </div>
-      <div className="grid grid-cols-7 gap-1 mb-1">
-        {DOW.map(d => <div key={d} className="text-center text-xs text-gray-400 font-medium py-1">{d}</div>)}
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {weekDays.map(d => {
-          const ds = toDateStr(d); const inS = isInSummer(d)
-          const isToday = ds === today; const isSel = selectedDate === ds
-          const bookedCount = existingLessons.filter(l => l.date === ds).length
-          return (
-            <button key={ds} disabled={!inS}
-              onClick={() => { setSelectedDate(ds); setSelectedSlots(new Set()) }}
-              className={`flex flex-col items-center justify-center h-12 sm:h-14 rounded-xl text-sm font-bold transition-all
-                ${!inS ? 'text-gray-200 cursor-not-allowed' : 'hover:scale-105'}
-                ${inS && !isSel && !isToday ? 'text-gray-600 hover:bg-blue-50' : ''}
-                ${isToday && !isSel ? 'bg-blue-50 text-blue-600' : ''}
-                ${isSel ? 'bg-blue-600 text-white shadow-md' : ''}`}>
-              <span>{d.getDate()}</span>
-              {bookedCount > 0 && inS && (
-                <span className={`text-[9px] font-bold mt-0.5 ${isSel ? 'text-blue-200' : 'text-blue-500'}`}>{bookedCount}コマ</span>
-              )}
-            </button>
-          )
-        })}
-      </div>
+    )
+  }
+
+  const DayList = () => (
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      {TIME_SLOTS.map(slot => {
+        const lesson = existingAt(current, slot)
+        const sel = selected.has(key(current, slot))
+        return (
+          <button key={slot} onClick={() => toggleCell(current, slot)}
+            className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-colors active:opacity-70
+              ${lesson ? 'bg-teal-50' : sel ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+            <span className="text-sm font-medium text-gray-500 w-14 flex-shrink-0">{slot}</span>
+            <div className={`flex-1 h-2.5 rounded-full ${lesson ? 'bg-teal-400' : sel ? 'bg-blue-400' : 'bg-gray-100'}`} />
+            {lesson && <span className="text-xs font-semibold text-teal-600 flex-shrink-0">申込済 ✕</span>}
+            {!lesson && sel && <span className="text-xs font-semibold text-blue-600 flex-shrink-0">選択中</span>}
+          </button>
+        )
+      })}
     </div>
   )
 
-  const SlotsPanel = () => (
-    selectedDate ? (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 sm:p-6 space-y-5">
-        <div>
-          <h2 className="text-base font-bold text-gray-800">
-            {new Date(selectedDate+'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' })}
-          </h2>
-          <p className="text-sm text-gray-400 mt-0.5">希望の時間帯を選んでください（複数OK）</p>
-        </div>
-        <div>
-          <div className="text-xs font-bold text-gray-400 tracking-widest mb-2">午前</div>
-          <div className="grid grid-cols-4 gap-2">
-            {AM_SLOTS.map(slot => <SlotBtn key={slot} slot={slot} />)}
-          </div>
-        </div>
-        <div>
-          <div className="text-xs font-bold text-gray-400 tracking-widest mb-2">午後</div>
-          <div className="grid grid-cols-4 gap-2">
-            {PM_SLOTS.map(slot => <SlotBtn key={slot} slot={slot} />)}
-          </div>
-        </div>
-        {selectedSlots.size > 0 && (
-          <div className="pt-3 border-t border-gray-100">
-            <div className="text-sm text-gray-600 mb-3">
-              選択中：<span className="font-bold text-blue-600">{selectedSlots.size}コマ</span>
-              <span className="text-xs text-gray-400 ml-1.5">（{Array.from(selectedSlots).sort().join('・')}）</span>
-            </div>
-            <button onClick={handleSubmit} disabled={submitting}
-              className="w-full bg-blue-600 text-white font-bold text-base h-14 rounded-2xl disabled:opacity-50 hover:bg-blue-700 active:scale-95 transition-all shadow-lg shadow-blue-100 cursor-pointer">
-              {submitting ? '申込み中...' : `${selectedSlots.size}コマを申し込む`}
-            </button>
-          </div>
-        )}
-      </div>
-    ) : (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400 text-sm">
-        左のカレンダーから日付を選んでください
-      </div>
-    )
-  )
+  function formatCancelInfo(lesson: SummerLesson) {
+    const d = new Date(lesson.date + 'T12:00:00')
+    const dateStr = d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })
+    const timeStr = `${lesson.start_time}〜${lesson.end_time}`
+    return { dateStr, timeStr }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => router.back()}
-          className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
-        <div>
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="px-4 py-3 flex items-center gap-3">
+          <button onClick={() => router.back()} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
           <h1 className="text-base font-bold text-gray-800">授業を申し込む</h1>
-          <p className="text-xs text-gray-400">{student.full_name}</p>
         </div>
       </header>
-      <main className="px-4 py-5 max-w-4xl mx-auto">
-        {done && (
-          <div className="bg-green-50 border border-green-200 rounded-2xl px-5 py-4 text-center text-green-700 font-bold text-base mb-4">
-            ✅ 申込みが完了しました！
+
+      <main className="max-w-4xl mx-auto px-3 py-4 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
+            {(['month','week','day'] as View[]).map(v => (
+              <button key={v} onClick={() => setView(v)}
+                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
+                  ${view === v ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>
+                {v === 'month' ? '月' : v === 'week' ? '週' : '日'}
+              </button>
+            ))}
+          </div>
+          <button onClick={navigatePrev} className="bg-gray-100 px-3 py-2 rounded-xl text-sm font-bold active:bg-gray-200">←</button>
+          <div className="flex-1 text-center font-bold text-gray-800 text-sm">{displayTitle()}</div>
+          <button onClick={navigateNext} className="bg-gray-100 px-3 py-2 rounded-xl text-sm font-bold active:bg-gray-200">→</button>
+        </div>
+
+        {view !== 'month' && (
+          <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+            <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-blue-400 rounded" />選択中</div>
+            <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-teal-400 rounded" />申込済（タップで変更・キャンセル）</div>
           </div>
         )}
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="lg:w-96 flex-shrink-0"><CalendarPanel /></div>
-          <div className="flex-1"><SlotsPanel /></div>
-        </div>
+
+        {view === 'week' && <WeekGrid />}
+        {view === 'month' && <MonthGrid />}
+        {view === 'day' && <DayList />}
+
+        {view !== 'month' && (
+          <p className="text-xs text-gray-400 text-center">
+            {view === 'week' ? 'タップで1コマ選択 / 長押しドラッグで連続選択' : 'タップで選択・変更'}
+          </p>
+        )}
+
+        {msg && (
+          <div className={`text-center font-bold py-2 rounded-xl ${msg.includes('失敗') ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}>
+            {msg}
+          </div>
+        )}
+
+        {view !== 'month' && (
+          <button onClick={handleSubmit} disabled={saving || selected.size === 0}
+            className="w-full bg-blue-600 text-white py-4 rounded-2xl text-base font-medium active:bg-blue-700 disabled:opacity-50">
+            {saving ? '送信中...' : `この内容で申込む（${selected.size}コマ）`}
+          </button>
+        )}
       </main>
+
+      {cancelModal && (() => {
+        const { dateStr, timeStr } = formatCancelInfo(cancelModal)
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+              <div className="p-5 space-y-4">
+                <h2 className="text-base font-bold text-gray-800">申込み済みの日時</h2>
+                <div className="bg-teal-50 rounded-xl p-4 space-y-1">
+                  <div className="text-sm font-semibold text-teal-700">{dateStr}</div>
+                  <div className="text-lg font-bold text-teal-800">{timeStr}</div>
+                </div>
+                <p className="text-sm text-gray-500">変更する場合は、この申込みをキャンセルしてから新しい日時を選んでください。</p>
+                <div className="space-y-2">
+                  <button onClick={() => cancelLesson(cancelModal.id)}
+                    className="w-full bg-red-500 text-white py-3 rounded-xl text-sm font-bold active:bg-red-600">
+                    この申込みをキャンセルして変更する
+                  </button>
+                  <button onClick={() => setCancelModal(null)}
+                    className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200">
+                    このままにする
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

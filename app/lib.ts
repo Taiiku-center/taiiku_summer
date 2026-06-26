@@ -1,7 +1,7 @@
 // 夏期講習 共通定義
 
-export const SUMMER_START = '2026-07-22'
-export const SUMMER_END   = '2026-08-31'
+export const SUMMER_START = '2026-07-20'
+export const SUMMER_END   = '2026-08-20'
 
 export const TIME_SLOTS = [
   '10:00', '10:30', '11:00', '11:30',
