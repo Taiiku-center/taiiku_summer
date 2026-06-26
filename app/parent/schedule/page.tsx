@@ -145,7 +145,7 @@ export default function SummerSchedulePage() {
   function displayTitle() {
     const wd = weekDates()
     if (view === 'month') return `${current.getFullYear()}年${current.getMonth() + 1}月`
-    if (view === 'week') return `${wd[0].getMonth()+1}/${wd[0].getDate()} 〜 ${wd[6].getMonth()+1}/${wd[6].getDate()}`
+    if (view === 'week') return `${wd[0].getMonth()+1}/${wd[0].getDate()} 〜 ${wd[5].getMonth()+1}/${wd[5].getDate()}`
     const dow = ['日','月','火','水','木','金','土'][current.getDay()]
     return `${current.getMonth()+1}/${current.getDate()}（${dow}）`
   }
@@ -213,13 +213,13 @@ export default function SummerSchedulePage() {
           touchAction: selectMode ? 'none' : 'pan-x pan-y',
           WebkitUserSelect: 'none', userSelect: 'none',
         }}>
-        <div className="min-w-[400px]" style={{ display: 'grid', gridTemplateColumns: '52px repeat(7, 1fr)' }}>
+        <div className="min-w-[360px]" style={{ display: 'grid', gridTemplateColumns: '52px repeat(6, 1fr)' }}>
           <div className="border-b border-r border-gray-200" />
-          {wd.map((d, i) => {
+          {wd.slice(0, 6).map((d, i) => {
             const inS = isInSummer(d)
             return (
               <div key={i} className={`border-b border-r border-gray-200 py-2 text-center text-xs font-bold leading-tight
-                ${i===6?'text-red-500':i===5?'text-blue-500':'text-gray-600'}
+                ${i===5?'text-blue-500':'text-gray-600'}
                 ${!inS ? 'opacity-30' : ''}`}>
                 {DAYS_JP[i]}<br/><span className="font-normal text-gray-400">{d.getMonth()+1}/{d.getDate()}</span>
               </div>
@@ -230,7 +230,7 @@ export default function SummerSchedulePage() {
               <div className="border-b border-r border-gray-200 flex items-center justify-end pr-1.5 text-xs text-gray-400 h-10 whitespace-nowrap">
                 {slot}
               </div>
-              {wd.map((d, di) => {
+              {wd.slice(0, 6).map((d, di) => {
                 const lesson = existingAt(d, slot)
                 const sel = selected.has(key(d, slot))
                 const inS = isInSummer(d)
@@ -261,20 +261,25 @@ export default function SummerSchedulePage() {
   const MonthGrid = () => {
     const y = current.getFullYear(), m = current.getMonth()
     const first = new Date(y, m, 1), last = new Date(y, m+1, 0)
-    const startDow = first.getDay() === 0 ? 6 : first.getDay() - 1
+    // 日曜除外：月=0, 火=1, ..., 土=5。日曜(getDay()=0)はスキップ
+    const firstDow = first.getDay() === 0 ? 0 : first.getDay() - 1
     const submittedDates = new Set(existing.map(l => l.date))
-    const cells: (Date|null)[] = Array.from({ length: Math.ceil((startDow + last.getDate()) / 7) * 7 }, (_, i) => {
-      const n = i - startDow + 1
-      return n < 1 || n > last.getDate() ? null : new Date(y, m, n)
-    })
+    // 日曜を除いた日付リストを生成
+    const allDays: Date[] = []
+    for (let d = 1; d <= last.getDate(); d++) {
+      const date = new Date(y, m, d)
+      if (date.getDay() !== 0) allDays.push(date)
+    }
+    const cells: (Date|null)[] = [...Array(firstDow).fill(null), ...allDays]
+    while (cells.length % 6 !== 0) cells.push(null)
     return (
       <div className="bg-white rounded-2xl shadow-sm p-4">
-        <div className="grid grid-cols-7 mb-1">
-          {['月','火','水','木','金','土','日'].map((d, i) => (
-            <div key={d} className={`text-center text-xs font-bold py-2 ${i===6?'text-red-500':i===5?'text-blue-500':'text-gray-500'}`}>{d}</div>
+        <div className="grid grid-cols-6 mb-1">
+          {['月','火','水','木','金','土'].map((d, i) => (
+            <div key={d} className={`text-center text-xs font-bold py-2 ${i===5?'text-blue-500':'text-gray-500'}`}>{d}</div>
           ))}
         </div>
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-6 gap-1">
           {cells.map((d, i) => {
             if (!d) return <div key={i} />
             const ds = toDateStr(d), has = submittedDates.has(ds)
@@ -284,7 +289,6 @@ export default function SummerSchedulePage() {
               <button key={i} disabled={!inS} onClick={() => { if (inS) { setCurrent(d); setView('week') } }}
                 className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors
                   ${!inS ? 'text-gray-200' : isToday ? 'bg-blue-600 text-white' :
-                    dow===0 ? 'text-red-500 hover:bg-red-50' :
                     dow===6 ? 'text-blue-500 hover:bg-blue-50' :
                     'text-gray-700 hover:bg-gray-100'}`}>
                 {d.getDate()}
