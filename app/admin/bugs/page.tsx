@@ -1,0 +1,79 @@
+﻿'use client'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { createClient } from '../../lib/supabase'
+import { type SummerBugReport } from '../../lib'
+
+export default function SummerAdminBugsPage() {
+  const router = useRouter()
+  const [reports, setReports] = useState<SummerBugReport[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => { fetchReports() }, [])
+
+  async function fetchReports() {
+    const supabase = createClient()
+    const { data } = await supabase
+      .from('summer_bug_reports')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setReports(data || [])
+    setLoading(false)
+  }
+
+  async function markRead(id: string) {
+    const supabase = createClient()
+    await supabase.from('summer_bug_reports').update({ status: 'read' }).eq('id', id)
+    setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'read' } : r))
+  }
+
+  const unread = reports.filter(r => r.status === 'unread').length
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <header className="bg-white border-b border-gray-200 px-4 md:px-6 py-3 flex items-center gap-3 sticky top-0 z-10">
+        <button onClick={() => router.push('/admin')} className="text-gray-400 text-xl px-1">窶ｹ</button>
+        <div className="flex-1">
+          <h1 className="text-base font-bold text-gray-800">荳榊・蜷亥ｱ蜻贋ｸ隕ｧ</h1>
+          <p className="text-xs text-gray-400">螟乗悄隰帷ｿ・/p>
+        </div>
+        {unread > 0 && (
+          <span className="bg-red-500 text-white text-xs font-bold rounded-full px-2 py-0.5">{unread}莉ｶ 譛ｪ遒ｺ隱・/span>
+        )}
+      </header>
+
+      <main className="px-4 md:px-6 py-4 max-w-3xl mx-auto space-y-3">
+        {loading ? (
+          <div className="text-center text-gray-400 py-10">隱ｭ縺ｿ霎ｼ縺ｿ荳ｭ...</div>
+        ) : reports.length === 0 ? (
+          <div className="text-center text-gray-400 py-10">荳榊・蜷亥ｱ蜻翫・縺ゅｊ縺ｾ縺帙ｓ</div>
+        ) : (
+          reports.map(r => (
+            <div key={r.id} className={`bg-white rounded-2xl border shadow-sm p-4 ${r.status === 'unread' ? 'border-red-200' : 'border-gray-100'}`}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-gray-800 text-sm">{r.full_name}</span>
+                    <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">{r.screen_name}</span>
+                    {r.status === 'unread' && (
+                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-semibold">譛ｪ遒ｺ隱・/span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{r.description}</p>
+                  <div className="text-xs text-gray-300 mt-2">{new Date(r.created_at).toLocaleString('ja-JP')}</div>
+                </div>
+                {r.status === 'unread' && (
+                  <button onClick={() => markRead(r.id)}
+                    className="flex-shrink-0 text-xs bg-gray-100 text-gray-600 px-3 py-1.5 rounded-lg hover:bg-gray-200 transition-colors whitespace-nowrap">
+                    遒ｺ隱肴ｸ医∩縺ｫ縺吶ｋ
+                  </button>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </main>
+    </div>
+  )
+}
+
