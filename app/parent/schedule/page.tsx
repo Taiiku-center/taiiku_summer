@@ -136,6 +136,12 @@ export default function SummerSchedulePage() {
 
   function isInSummer(d: Date) { const s = toDateStr(d); return s >= SUMMER_START && s <= SUMMER_END }
 
+  // 月・木の10:00〜12:00は選択不可
+  function isBlocked(d: Date, slot: string) {
+    const dow = d.getDay()
+    return (dow === 1 || dow === 4) && ['10:00', '10:30', '11:00', '11:30'].includes(slot)
+  }
+
   function displayTitle() {
     const wd = weekDates()
     if (view === 'month') return `${current.getFullYear()}年${current.getMonth() + 1}月`
@@ -150,7 +156,7 @@ export default function SummerSchedulePage() {
     const wd = weekDates()
 
     function onPointerDown(e: React.PointerEvent, d: Date, slot: string) {
-      if (!isInSummer(d)) return
+      if (!isInSummer(d) || isBlocked(d, slot)) return
       const isMouse = e.pointerType === 'mouse'
       const isTouch = !isMouse
 
@@ -192,7 +198,7 @@ export default function SummerSchedulePage() {
         suppressNextClick.current = false
         return // PCのpointerDownが処理済みなのでスキップ
       }
-      if (!isInSummer(d)) return
+      if (!isInSummer(d) || isBlocked(d, slot)) return
       toggleCell(d, slot)
     }
 
@@ -228,6 +234,7 @@ export default function SummerSchedulePage() {
                 const lesson = existingAt(d, slot)
                 const sel = selected.has(key(d, slot))
                 const inS = isInSummer(d)
+                const blocked = isBlocked(d, slot)
                 return (
                   <div key={di}
                     data-ds={toDateStr(d)} data-slot={slot}
@@ -236,10 +243,11 @@ export default function SummerSchedulePage() {
                     onPointerUp={onPointerUp}
                     onClick={() => handleClick(d, slot)}
                     className={`border-b border-r border-gray-200 h-10 transition-colors
-                      ${!inS ? 'bg-gray-50' :
+                      ${!inS || blocked ? 'bg-gray-50 cursor-not-allowed' :
                         lesson ? 'bg-teal-400 active:bg-teal-300 cursor-pointer' :
                         sel ? 'bg-blue-400 cursor-pointer' :
                         'hover:bg-blue-50 active:bg-blue-100 cursor-pointer'}`}
+                    style={blocked ? { backgroundImage: 'repeating-linear-gradient(45deg, #d1d5db 0px, #d1d5db 1px, transparent 1px, transparent 6px)' } : undefined}
                   />
                 )
               })}
