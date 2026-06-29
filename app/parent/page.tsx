@@ -39,7 +39,7 @@ export default function SummerParentPage() {
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">☀️</div>
           <h2 className="text-xl font-bold text-gray-800">2026年 夏期講習</h2>
-          <p className="text-sm text-gray-400 mt-1">7月22日（水）〜 8月31日（月）</p>
+          <p className="text-sm text-gray-400 mt-1">7月20日（月）〜 8月29日（土）</p>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
