@@ -37,15 +37,21 @@ export default function SummerCalendarPage() {
     const first = new Date(year, month, 1)
     const last  = new Date(year, month + 1, 0)
     const firstDow = first.getDay() === 0 ? 0 : first.getDay() - 1
-    const allDays: Date[] = []
+    const allDays: (Date | null)[] = []
     for (let d = 1; d <= last.getDate(); d++) {
       const date = new Date(year, month, d)
-      if (date.getDay() !== 0) allDays.push(date)
+      if (date.getDay() === 0) continue
+      const ds = toDateStr(date)
+      // 期間外は空セルとして扱う
+      allDays.push(ds >= SUMMER_START && ds <= SUMMER_END ? date : null)
     }
     const days: (Date | null)[] = [...Array(firstDow).fill(null), ...allDays]
     while (days.length % 6 !== 0) days.push(null)
     return days
   }
+
+  const canGoPrevMonth = !(viewMonth.getFullYear() === 2026 && viewMonth.getMonth() === 6)
+  const canGoNextMonth = !(viewMonth.getFullYear() === 2026 && viewMonth.getMonth() === 7)
 
   function lessonsOn(ds: string) { return lessons.filter(l => l.date === ds) }
   function absencesOn(ds: string) { return absences.filter(a => a.date === ds) }
@@ -88,12 +94,14 @@ export default function SummerCalendarPage() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-4">
               <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
-                className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all">‹</button>
+                disabled={!canGoPrevMonth}
+                className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-20">‹</button>
               <span className="text-base font-bold text-gray-800">
                 {viewMonth.getFullYear()}年{viewMonth.getMonth() + 1}月
               </span>
               <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
-                className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all">›</button>
+                disabled={!canGoNextMonth}
+                className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-20">›</button>
             </div>
             <div className="grid grid-cols-6 mb-2">
               {['月','火','水','木','金','土'].map((d, i) => (
@@ -114,7 +122,7 @@ export default function SummerCalendarPage() {
                   <button key={ds} disabled={!inS}
                     onClick={() => setSelectedDate(isSel ? null : ds)}
                     className={`relative flex flex-col items-center justify-center py-3 rounded-xl text-sm font-medium transition-all active:scale-95
-                      ${!inS ? 'text-gray-200' : ''}
+                      ${!inS ? 'invisible' : ''}
                       ${inS && !isSel && !isToday ? (dow===6?'text-blue-500 hover:bg-blue-50':'text-gray-700 hover:bg-gray-100') : ''}
                       ${isToday && !isSel ? 'bg-blue-50 text-blue-600' : ''}
                       ${isSel ? 'bg-blue-600 text-white shadow-md' : ''}`}>

@@ -41,8 +41,10 @@ export default function SummerAdminPage() {
     })
   }
 
-  function prevWeek() { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d) }
-  function nextWeek() { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d) }
+  const canPrevWeek = toDateStr(weekStart) > SUMMER_START
+  const canNextWeek = (() => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); return toDateStr(d) <= SUMMER_END })()
+  function prevWeek() { if (!canPrevWeek) return; const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d) }
+  function nextWeek() { if (!canNextWeek) return; const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d) }
 
   function lessonsAt(date: string, slot: string) { return lessons.filter(l => l.date === date && l.start_time === slot) }
   function absencesAt(date: string, slot: string) { return absences.filter(a => a.date === date && a.time === slot) }
@@ -89,11 +91,11 @@ export default function SummerAdminPage() {
 
       <main className="px-3 py-4 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-3">
-          <button onClick={prevWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50">‹</button>
+          <button onClick={prevWeek} disabled={!canPrevWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
           <span className="text-sm font-bold text-gray-700">
             {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} 〜 {weekDays[6].getMonth()+1}/{weekDays[6].getDate()}
           </span>
-          <button onClick={nextWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50">›</button>
+          <button onClick={nextWeek} disabled={!canNextWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
         </div>
 
         <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4">
@@ -107,7 +109,7 @@ export default function SummerAdminPage() {
             return (
               <button key={ds} disabled={!inS} onClick={() => { setSelectedDate(ds); setSelectedCell(null) }}
                 className={`flex-shrink-0 flex flex-col items-center w-12 py-2 rounded-2xl transition-colors
-                  ${!inS ? 'opacity-30' : ''}
+                  ${!inS ? 'invisible pointer-events-none' : ''}
                   ${isSel ? 'bg-blue-600 text-white shadow-md' : isToday ? 'bg-blue-50 text-blue-600' : 'bg-white border border-gray-200 text-gray-600'}`}>
                 <span className="text-xs font-medium">{dow}</span>
                 <span className="text-base font-bold">{d.getDate()}</span>
