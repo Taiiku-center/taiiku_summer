@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import { TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, type SummerLesson, type SummerAbsence, type SummerNotification } from '../lib'
@@ -39,11 +39,6 @@ const STUDENT_PALETTE = [
   { bg: 'bg-pink-100',    text: 'text-pink-800',    bar: 'bg-pink-400',    dot: 'bg-pink-500' },
   { bg: 'bg-rose-100',    text: 'text-rose-800',    bar: 'bg-rose-400',    dot: 'bg-rose-500' },
 ]
-function studentColor(name: string) {
-  let h = 0
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0
-  return STUDENT_PALETTE[Math.abs(h) % STUDENT_PALETTE.length]
-}
 
 function clampToSummer(d: Date): Date {
   const ds = toDateStr(d)
@@ -97,6 +92,15 @@ export default function SummerAdminPage() {
     setNotifs(n.data || [])
     setLoading(false)
   }
+
+  // 生徒ごとに重複しない色を割り当て（名前を並べてパレット順に配色）
+  const studentColorMap = useMemo(() => {
+    const names = Array.from(new Set(lessons.map(l => l.full_name))).sort()
+    const m = new Map<string, typeof STUDENT_PALETTE[number]>()
+    names.forEach((n, i) => m.set(n, STUDENT_PALETTE[i % STUDENT_PALETTE.length]))
+    return m
+  }, [lessons])
+  const colorOf = (name: string) => studentColorMap.get(name) || STUDENT_PALETTE[0]
 
   const lessonsAt  = (date: string, slot: string) => lessons.filter(l => l.date === date && l.start_time === slot)
   const absencesAt = (date: string, slot: string) => absences.filter(a => a.date === date && a.time === slot)
@@ -193,7 +197,7 @@ export default function SummerAdminPage() {
               <div className="divide-y divide-gray-50">
                 {sL.map(l => {
                   const abs = sA.find(a => a.full_name === l.full_name)
-                  const sc = studentColor(l.full_name)
+                  const sc = colorOf(l.full_name)
                   return (
                     <div key={l.id} className="px-4 py-3 flex items-center justify-between gap-3">
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -403,7 +407,7 @@ export default function SummerAdminPage() {
                                   ${hasData && inS ? 'cursor-pointer hover:bg-blue-50' : ''}`}>
                                 <div className="space-y-0.5">
                                   {cL.map(l => {
-                                    const sc = studentColor(l.full_name)
+                                    const sc = colorOf(l.full_name)
                                     return (
                                     <div key={l.id} className={`rounded px-1.5 py-1 leading-snug font-medium text-xs flex items-center gap-0.5 ${sc.bg} ${sc.text} ${l.status !== 'confirmed' ? 'ring-1 ring-inset ring-gray-400/40' : ''}`}>
                                       <span className="font-bold opacity-60">{l.site}</span>{l.full_name}{l.status !== 'confirmed' && <span className="opacity-60">(申)</span>}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
@@ -434,7 +438,7 @@ export default function SummerAdminPage() {
                     <div className="space-y-2">
                       {lessonsAt(selectedCell.date, selectedCell.slot).map(l => {
                         const abs = absencesAt(selectedCell.date, selectedCell.slot).find(a => a.full_name === l.full_name)
-                        const sc = studentColor(l.full_name)
+                        const sc = colorOf(l.full_name)
                         return (
                           <div key={l.id} className={`flex items-stretch gap-3 rounded-xl p-3 overflow-hidden relative ${sc.bg}`}>
                             <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${sc.bar}`} />
