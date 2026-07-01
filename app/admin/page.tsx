@@ -111,6 +111,26 @@ export default function SummerAdminPage() {
   const today = toDateStr(new Date())
   const daySlots = TIME_SLOTS.filter(slot => lessonsAt(selectedDate, slot).length > 0 || absencesAt(selectedDate, slot).length > 0)
 
+  function downloadCSV() {
+    const rows: string[][] = [['日付', '曜日', '時間帯', '生徒名', 'ステータス', '欠席・遅刻']]
+    const sorted = [...lessons].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
+    sorted.forEach(l => {
+      const d = new Date(l.date + 'T00:00:00')
+      const dow = DOW[d.getDay() === 0 ? 6 : d.getDay() - 1]
+      const abs = absences.find(a => a.student_id === l.student_id && a.date === l.date && a.time === l.start_time)
+      rows.push([
+        l.date, dow, `${l.start_time}〜${l.end_time}`, l.full_name,
+        STATUS_LABEL[l.status] || l.status,
+        abs ? `${abs.type}（振替：${abs.make_up_request}）` : ''
+      ])
+    })
+    const bom = '﻿'
+    const csv = bom + rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n')
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8;' }))
+    const a = document.createElement('a'); a.href = url; a.download = '夏期講習スケジュール.csv'; a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function DayDetail({ date }: { date: string }) {
     const slots = TIME_SLOTS.filter(slot => lessonsAt(date, slot).length > 0 || absencesAt(date, slot).length > 0)
     if (slots.length === 0) return (
@@ -191,15 +211,21 @@ export default function SummerAdminPage() {
         ))}
       </div>
 
-      {/* 月・週・日 切替 */}
-      <div className="bg-white border-b border-gray-100 px-4 py-2 flex gap-1">
-        {(['month', 'week', 'day'] as AdminView[]).map((v, i) => (
-          <button key={v} onClick={() => setView(v)}
-            className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors
-              ${view === v ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
-            {['月', '週', '日'][i]}
-          </button>
-        ))}
+      {/* 月・週・日 切替 + CSV */}
+      <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center justify-between gap-2">
+        <div className="flex gap-1">
+          {(['month', 'week', 'day'] as AdminView[]).map((v, i) => (
+            <button key={v} onClick={() => setView(v)}
+              className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors
+                ${view === v ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+              {['月', '週', '日'][i]}
+            </button>
+          ))}
+        </div>
+        <button onClick={downloadCSV}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition-colors">
+          ⬇ CSV出力
+        </button>
       </div>
 
       <main className="px-3 py-4 max-w-5xl mx-auto">
@@ -304,7 +330,7 @@ export default function SummerAdminPage() {
                           const dow = DOW[d.getDay() === 0 ? 6 : d.getDay() - 1]
                           return (
                             <th key={ds} onClick={() => setSelectedDate(ds)}
-                              className={`border border-gray-200 py-2 px-1 text-xs font-semibold cursor-pointer min-w-[80px]
+                              className={`border border-gray-200 py-2 px-2 text-xs font-semibold cursor-pointer min-w-[140px]
                                 ${isToday ? 'bg-blue-50 text-blue-700' : selectedDate === ds ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-600'}
                                 ${!inS ? 'opacity-30' : ''}`}>
                               <div>{d.getMonth()+1}/{d.getDate()}（{dow}）</div>
@@ -326,13 +352,13 @@ export default function SummerAdminPage() {
                             return (
                               <td key={ds}
                                 onClick={() => hasData && inS && setSelectedCell(isSel ? null : { date: ds, slot })}
-                                className={`border border-gray-200 p-1 align-top text-xs min-h-[40px]
+                                className={`border border-gray-200 p-1.5 align-top text-xs min-h-[48px]
                                   ${!inS ? 'bg-gray-50' : ''}
                                   ${isSel ? 'bg-blue-50 ring-2 ring-inset ring-blue-500' : ''}
                                   ${hasData && inS ? 'cursor-pointer hover:bg-blue-50' : ''}`}>
                                 <div className="space-y-0.5">
                                   {cL.map(l => (
-                                    <div key={l.id} className={`rounded px-1 py-0.5 leading-tight font-medium ${l.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
+                                    <div key={l.id} className={`rounded px-1.5 py-1 leading-snug font-medium text-xs ${l.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
                                       {l.full_name}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
                                     </div>
                                   ))}
