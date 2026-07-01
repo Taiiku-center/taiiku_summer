@@ -41,6 +41,11 @@ export default function SummerSchedulePage() {
   const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState(false)
 
+  // スマホ幅では日ビューをデフォルトに
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 640) setView('day')
+  }, [])
+
   // PC drag
   const dragActive         = useRef(false)
   const paintV             = useRef(true)
@@ -84,7 +89,7 @@ export default function SummerSchedulePage() {
     setCancelConfirm(false)
     await supabase.from('summer_lessons').delete().eq('id', id)
     setMsg('キャンセルしました。新しい日時を選んで申込みできます')
-    setMsgIsError(true)
+    setMsgIsError(false)
     setTimeout(() => setMsg(''), 5000)
   }
 
@@ -116,6 +121,7 @@ export default function SummerSchedulePage() {
     } else {
       setMsg(`✅ ${count}コマの申込みが完了しました`)
       setMsgIsError(false)
+      setSelected(new Set())
     }
     await fetchExisting()
   }
