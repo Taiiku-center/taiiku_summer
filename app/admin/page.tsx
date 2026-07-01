@@ -68,13 +68,18 @@ export default function SummerAdminPage() {
   const canNextMonth = !(viewMonth.getFullYear() === 2026 && viewMonth.getMonth() === 7)
   function monthDays(): (Date | null)[] {
     const year = viewMonth.getFullYear(), month = viewMonth.getMonth()
-    const first = new Date(year, month, 1), last = new Date(year, month + 1, 0)
-    const startDow = (first.getDay() + 6) % 7
+    const monthFirst = new Date(year, month, 1)
+    const monthLast  = new Date(year, month + 1, 0)
+    const periStart  = new Date(SUMMER_START + 'T00:00:00')
+    const periEnd    = new Date(SUMMER_END   + 'T00:00:00')
+    const effStart   = monthFirst < periStart ? periStart : monthFirst
+    const effEnd     = monthLast  > periEnd   ? periEnd   : monthLast
+    const startDow   = (effStart.getDay() + 6) % 7
     const days: (Date | null)[] = Array(startDow).fill(null)
-    for (let d = 1; d <= last.getDate(); d++) {
-      const date = new Date(year, month, d)
-      const ds = toDateStr(date)
-      days.push(inSummer(ds) ? date : null)
+    const cur = new Date(effStart)
+    while (toDateStr(cur) <= toDateStr(effEnd)) {
+      days.push(new Date(cur))
+      cur.setDate(cur.getDate() + 1)
     }
     while (days.length % 7 !== 0) days.push(null)
     return days
