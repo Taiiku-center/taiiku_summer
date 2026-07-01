@@ -20,6 +20,31 @@ function SiteBadge({ site }: { site: '①' | '②' }) {
   )
 }
 
+// 生徒ごとの固定色（名前から決定的に割り当て）
+const STUDENT_PALETTE = [
+  { bg: 'bg-red-100',     text: 'text-red-800',     bar: 'bg-red-400',     dot: 'bg-red-500' },
+  { bg: 'bg-orange-100',  text: 'text-orange-800',  bar: 'bg-orange-400',  dot: 'bg-orange-500' },
+  { bg: 'bg-amber-100',   text: 'text-amber-800',   bar: 'bg-amber-400',   dot: 'bg-amber-500' },
+  { bg: 'bg-lime-100',    text: 'text-lime-800',    bar: 'bg-lime-400',    dot: 'bg-lime-500' },
+  { bg: 'bg-green-100',   text: 'text-green-800',   bar: 'bg-green-400',   dot: 'bg-green-500' },
+  { bg: 'bg-emerald-100', text: 'text-emerald-800', bar: 'bg-emerald-400', dot: 'bg-emerald-500' },
+  { bg: 'bg-teal-100',    text: 'text-teal-800',    bar: 'bg-teal-400',    dot: 'bg-teal-500' },
+  { bg: 'bg-cyan-100',    text: 'text-cyan-800',    bar: 'bg-cyan-400',    dot: 'bg-cyan-500' },
+  { bg: 'bg-sky-100',     text: 'text-sky-800',     bar: 'bg-sky-400',     dot: 'bg-sky-500' },
+  { bg: 'bg-blue-100',    text: 'text-blue-800',    bar: 'bg-blue-400',    dot: 'bg-blue-500' },
+  { bg: 'bg-indigo-100',  text: 'text-indigo-800',  bar: 'bg-indigo-400',  dot: 'bg-indigo-500' },
+  { bg: 'bg-violet-100',  text: 'text-violet-800',  bar: 'bg-violet-400',  dot: 'bg-violet-500' },
+  { bg: 'bg-purple-100',  text: 'text-purple-800',  bar: 'bg-purple-400',  dot: 'bg-purple-500' },
+  { bg: 'bg-fuchsia-100', text: 'text-fuchsia-800', bar: 'bg-fuchsia-400', dot: 'bg-fuchsia-500' },
+  { bg: 'bg-pink-100',    text: 'text-pink-800',    bar: 'bg-pink-400',    dot: 'bg-pink-500' },
+  { bg: 'bg-rose-100',    text: 'text-rose-800',    bar: 'bg-rose-400',    dot: 'bg-rose-500' },
+]
+function studentColor(name: string) {
+  let h = 0
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) | 0
+  return STUDENT_PALETTE[Math.abs(h) % STUDENT_PALETTE.length]
+}
+
 function clampToSummer(d: Date): Date {
   const ds = toDateStr(d)
   if (ds < SUMMER_START) return new Date(SUMMER_START + 'T00:00:00')
@@ -168,11 +193,15 @@ export default function SummerAdminPage() {
               <div className="divide-y divide-gray-50">
                 {sL.map(l => {
                   const abs = sA.find(a => a.full_name === l.full_name)
+                  const sc = studentColor(l.full_name)
                   return (
-                    <div key={l.id} className="px-4 py-3 flex items-center justify-between">
-                      <div>
-                        <div className="text-sm font-bold text-gray-800"><SiteBadge site={l.site} />{l.full_name}</div>
-                        {abs && <div className="text-xs text-orange-600 mt-0.5">⚠ {abs.type}・振替：{abs.make_up_request}</div>}
+                    <div key={l.id} className="px-4 py-3 flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${sc.dot}`} />
+                        <div>
+                          <div className="text-sm font-bold text-gray-800"><SiteBadge site={l.site} />{l.full_name}</div>
+                          {abs && <div className="text-xs text-orange-600 mt-0.5">⚠ {abs.type}・振替：{abs.make_up_request}</div>}
+                        </div>
                       </div>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_COLOR[l.status] || 'bg-gray-100 text-gray-600'}`}>
                         {STATUS_LABEL[l.status] || l.status}
@@ -373,11 +402,14 @@ export default function SummerAdminPage() {
                                   ${isSel ? 'bg-blue-50 ring-2 ring-inset ring-blue-500' : ''}
                                   ${hasData && inS ? 'cursor-pointer hover:bg-blue-50' : ''}`}>
                                 <div className="space-y-0.5">
-                                  {cL.map(l => (
-                                    <div key={l.id} className={`rounded px-1.5 py-1 leading-snug font-medium text-xs ${l.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                      <span className={`font-bold mr-0.5 ${l.site === '②' ? 'text-purple-600' : 'text-sky-600'}`}>{l.site}</span>{l.full_name}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
+                                  {cL.map(l => {
+                                    const sc = studentColor(l.full_name)
+                                    return (
+                                    <div key={l.id} className={`rounded px-1.5 py-1 leading-snug font-medium text-xs flex items-center gap-0.5 ${sc.bg} ${sc.text} ${l.status !== 'confirmed' ? 'ring-1 ring-inset ring-gray-400/40' : ''}`}>
+                                      <span className="font-bold opacity-60">{l.site}</span>{l.full_name}{l.status !== 'confirmed' && <span className="opacity-60">(申)</span>}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
                                     </div>
-                                  ))}
+                                    )
+                                  })}
                                   {cA.filter(a => !cL.some(l => l.full_name === a.full_name)).map(a => (
                                     <div key={a.id} className="rounded px-1 py-0.5 bg-orange-100 text-orange-800 leading-tight font-medium">{a.full_name}（{a.type}）</div>
                                   ))}
@@ -402,9 +434,11 @@ export default function SummerAdminPage() {
                     <div className="space-y-2">
                       {lessonsAt(selectedCell.date, selectedCell.slot).map(l => {
                         const abs = absencesAt(selectedCell.date, selectedCell.slot).find(a => a.full_name === l.full_name)
+                        const sc = studentColor(l.full_name)
                         return (
-                          <div key={l.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
-                            <div className="flex-1">
+                          <div key={l.id} className={`flex items-stretch gap-3 rounded-xl p-3 overflow-hidden relative ${sc.bg}`}>
+                            <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${sc.bar}`} />
+                            <div className="flex-1 pl-1.5">
                               <div className="font-semibold text-gray-800 text-sm"><SiteBadge site={l.site} />{l.full_name}</div>
                               {abs && <div className="text-xs text-orange-600 mt-0.5">{abs.type}・振替：{abs.make_up_request}{abs.note && `（${abs.note}）`}</div>}
                             </div>
