@@ -5,10 +5,20 @@ import { createClient } from '../lib/supabase'
 import { TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, type SummerLesson, type SummerAbsence, type SummerNotification } from '../lib'
 
 type AdminView = 'month' | 'week' | 'day'
+type LessonRow = SummerLesson & { site: '①' | '②' }
 
 const DOW = ['月', '火', '水', '木', '金', '土', '日']
 const STATUS_COLOR: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-green-100 text-green-800' }
 const STATUS_LABEL: Record<string, string> = { pending: '申請済', confirmed: '確定' }
+
+function SiteBadge({ site }: { site: '①' | '②' }) {
+  return (
+    <span className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded mr-1 align-middle
+      ${site === '②' ? 'bg-purple-100 text-purple-700' : 'bg-sky-100 text-sky-700'}`}>
+      {site === '②' ? '②高' : '①小中'}
+    </span>
+  )
+}
 
 function clampToSummer(d: Date): Date {
   const ds = toDateStr(d)
@@ -20,7 +30,7 @@ function clampToSummer(d: Date): Date {
 export default function SummerAdminPage() {
   const router = useRouter()
   const [view, setView] = useState<AdminView>('week')
-  const [lessons,  setLessons]  = useState<SummerLesson[]>([])
+  const [lessons,  setLessons]  = useState<LessonRow[]>([])
   const [absences, setAbsences] = useState<SummerAbsence[]>([])
   const [notifs,   setNotifs]   = useState<SummerNotification[]>([])
   const [loading,  setLoading]  = useState(true)
@@ -47,12 +57,17 @@ export default function SummerAdminPage() {
   async function fetchAll() {
     setLoading(true)
     const supabase = createClient()
-    const [l, a, n] = await Promise.all([
+    const [l, l2, a, n] = await Promise.all([
       supabase.from('summer_lessons').select('*').gte('date', SUMMER_START).lte('date', SUMMER_END).neq('status', 'cancelled').order('date').order('start_time'),
+      supabase.from('summer_lessons2').select('*').gte('date', SUMMER_START).lte('date', SUMMER_END).neq('status', 'cancelled').order('date').order('start_time'),
       supabase.from('summer_absences').select('*').gte('date', SUMMER_START).lte('date', SUMMER_END).order('date'),
       supabase.from('summer_notifications').select('*').eq('is_read', false).order('created_at', { ascending: false }).limit(20),
     ])
-    setLessons(l.data || [])
+    const merged: LessonRow[] = [
+      ...(l.data  || []).map(r => ({ ...r, site: '①' as const })),
+      ...(l2.data || []).map(r => ({ ...r, site: '②' as const })),
+    ].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
+    setLessons(merged)
     setAbsences(a.data || [])
     setNotifs(n.data || [])
     setLoading(false)
@@ -112,13 +127,14 @@ export default function SummerAdminPage() {
   const daySlots = TIME_SLOTS.filter(slot => lessonsAt(selectedDate, slot).length > 0 || absencesAt(selectedDate, slot).length > 0)
 
   function downloadCSV() {
-    const rows: string[][] = [['日付', '曜日', '時間帯', '生徒名', 'ステータス', '欠席・遅刻']]
+    const rows: string[][] = [['区分', '日付', '曜日', '時間帯', '生徒名', 'ステータス', '欠席・遅刻']]
     const sorted = [...lessons].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
     sorted.forEach(l => {
       const d = new Date(l.date + 'T00:00:00')
       const dow = DOW[d.getDay() === 0 ? 6 : d.getDay() - 1]
       const abs = absences.find(a => a.student_id === l.student_id && a.date === l.date && a.time === l.start_time)
       rows.push([
+        l.site === '②' ? '②高校生ほか' : '①小中学生',
         l.date, dow, `${l.start_time}〜${l.end_time}`, l.full_name,
         STATUS_LABEL[l.status] || l.status,
         abs ? `${abs.type}（振替：${abs.make_up_request}）` : ''
@@ -155,7 +171,7 @@ export default function SummerAdminPage() {
                   return (
                     <div key={l.id} className="px-4 py-3 flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-bold text-gray-800">{l.full_name}</div>
+                        <div className="text-sm font-bold text-gray-800"><SiteBadge site={l.site} />{l.full_name}</div>
                         {abs && <div className="text-xs text-orange-600 mt-0.5">⚠ {abs.type}・振替：{abs.make_up_request}</div>}
                       </div>
                       <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_COLOR[l.status] || 'bg-gray-100 text-gray-600'}`}>
@@ -359,7 +375,7 @@ export default function SummerAdminPage() {
                                 <div className="space-y-0.5">
                                   {cL.map(l => (
                                     <div key={l.id} className={`rounded px-1.5 py-1 leading-snug font-medium text-xs ${l.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}>
-                                      {l.full_name}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
+                                      <span className={`font-bold mr-0.5 ${l.site === '②' ? 'text-purple-600' : 'text-sky-600'}`}>{l.site}</span>{l.full_name}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
                                     </div>
                                   ))}
                                   {cA.filter(a => !cL.some(l => l.full_name === a.full_name)).map(a => (
@@ -389,7 +405,7 @@ export default function SummerAdminPage() {
                         return (
                           <div key={l.id} className="flex items-start gap-3 bg-gray-50 rounded-xl p-3">
                             <div className="flex-1">
-                              <div className="font-semibold text-gray-800 text-sm">{l.full_name}</div>
+                              <div className="font-semibold text-gray-800 text-sm"><SiteBadge site={l.site} />{l.full_name}</div>
                               {abs && <div className="text-xs text-orange-600 mt-0.5">{abs.type}・振替：{abs.make_up_request}{abs.note && `（${abs.note}）`}</div>}
                             </div>
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[l.status] || 'bg-gray-100 text-gray-600'}`}>{STATUS_LABEL[l.status] || l.status}</span>
