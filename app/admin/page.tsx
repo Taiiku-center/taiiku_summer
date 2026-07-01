@@ -8,7 +8,7 @@ type AdminView = 'month' | 'week' | 'day'
 
 const DOW = ['月', '火', '水', '木', '金', '土', '日']
 const STATUS_COLOR: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-green-100 text-green-800' }
-const STATUS_LABEL: Record<string, string> = { pending: '申請中', confirmed: '確定' }
+const STATUS_LABEL: Record<string, string> = { pending: '申請済', confirmed: '確定' }
 
 function clampToSummer(d: Date): Date {
   const ds = toDateStr(d)
