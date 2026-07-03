@@ -192,8 +192,8 @@ export default function SummerAdminPage() {
     const byDate: Record<string, LessonRow[]> = {}
     mine.forEach(l => { (byDate[l.date] = byDate[l.date] || []).push(l) })
     const absOf = (date: string, time: string) => absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
-    const primary = stu.site === '②' ? '#7C3AED' : '#2563EB'
-    const light   = stu.site === '②' ? '#F5F3FF' : '#EFF6FF'
+    const primary = '#111827'   // 白黒印刷でも見やすいよう黒基調
+    const light   = '#e6e6e6'   // 授業のある日の網掛け（グレー）
     const dowH = ['月', '火', '水', '木', '金', '土', '日']
 
     function monthGrid(y: number, m: number) {
@@ -229,44 +229,33 @@ export default function SummerAdminPage() {
     while (cur <= end) { monthsSet.add(`${cur.getFullYear()}-${cur.getMonth()}`); cur.setDate(cur.getDate() + 1) }
     const grids = Array.from(monthsSet).map(k => { const [y, m] = k.split('-').map(Number); return monthGrid(y, m) }).join('')
 
-    const listRows = mine
-      .slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
-      .map(l => {
-        const d = new Date(l.date + 'T00:00:00')
-        const dow = dowH[d.getDay() === 0 ? 6 : d.getDay() - 1]
-        const ab = absOf(l.date, l.start_time)
-        return `<tr><td>${l.date}（${dow}）</td><td>${l.start_time}〜${l.end_time}</td><td>${STATUS_LABEL[l.status] || l.status}</td><td class="ab">${ab ? esc(ab.type + '・振替' + ab.make_up_request) : ''}</td></tr>`
-      }).join('')
+    const hasAbs = mine.some(l => absOf(l.date, l.start_time))
 
     const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(stu.name)} 授業カレンダー</title>
 <style>
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#1f2937; margin:0; padding:24px; }
-  .head { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid ${primary}; padding-bottom:12px; margin-bottom:16px; }
+  body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#111827; margin:0; padding:24px; }
+  .head { display:flex; align-items:center; justify-content:space-between; border-bottom:4px solid ${primary}; padding-bottom:12px; margin-bottom:14px; }
   .name { font-size:26px; font-weight:800; }
-  .sub { font-size:13px; color:#6b7280; margin-top:4px; }
-  .badge { background:${primary}; color:#fff; font-weight:700; font-size:14px; padding:6px 14px; border-radius:10px; }
-  .count { font-size:13px; color:#374151; margin-bottom:14px; }
-  .cals { display:flex; flex-wrap:wrap; gap:18px; }
+  .sub { font-size:13px; color:#374151; margin-top:4px; }
+  .badge { border:2px solid ${primary}; color:${primary}; font-weight:800; font-size:14px; padding:6px 14px; border-radius:8px; }
+  .count { font-size:13px; color:#111827; margin-bottom:6px; font-weight:600; }
+  .legend { font-size:11px; color:#374151; margin-bottom:14px; }
+  .legend .box { display:inline-block; width:12px; height:12px; background:${light}; border:1px solid #111827; vertical-align:-1px; margin-right:3px; }
+  .cals { display:flex; flex-wrap:wrap; gap:20px; }
   table.cal { border-collapse:collapse; width:340px; }
-  table.cal caption { text-align:left; font-weight:800; font-size:16px; margin-bottom:6px; color:${primary}; }
-  table.cal th { font-size:11px; color:#9ca3af; padding:4px 0; border-bottom:1px solid #e5e7eb; }
-  table.cal td { width:14.28%; height:56px; vertical-align:top; border:1px solid #eceff3; padding:3px; }
-  td.empty { background:#fafafa; border:none; }
-  td.out { background:#fafafa; }
-  td.has { background:${light}; }
-  .dnum { font-size:11px; font-weight:700; color:#4b5563; }
-  .dnum.sun { color:#dc2626; } .dnum.sat { color:#2563eb; }
-  th.sun { color:#dc2626; } th.sat { color:#2563eb; }
-  .ev { font-size:10px; font-weight:700; color:${primary}; margin-top:2px; line-height:1.3; }
-  .ev.abs { color:#ea580c; text-decoration:line-through; }
-  .ev .tag { display:inline-block; text-decoration:none; background:#ffedd5; color:#c2410c; border-radius:4px; padding:0 3px; margin-left:2px; font-size:9px; }
-  h2.lt { font-size:15px; margin:24px 0 8px; }
-  table.list { border-collapse:collapse; width:100%; font-size:12px; }
-  table.list th, table.list td { border:1px solid #e5e7eb; padding:5px 8px; text-align:left; }
-  table.list th { background:#f3f4f6; }
-  td.ab { color:#ea580c; }
-  .foot { margin-top:20px; font-size:11px; color:#9ca3af; text-align:center; }
+  table.cal caption { text-align:left; font-weight:800; font-size:16px; margin-bottom:6px; }
+  table.cal th { font-size:11px; font-weight:700; color:#111827; padding:4px 0; border-bottom:2px solid #111827; }
+  table.cal td { width:14.28%; height:58px; vertical-align:top; border:1px solid #9ca3af; padding:3px; }
+  td.empty { background:#ffffff; border:1px solid #e5e7eb; }
+  td.out { background:#f3f4f6; }
+  td.has { background:${light}; border:2px solid #111827; }
+  .dnum { font-size:11px; font-weight:700; color:#111827; }
+  td.has .dnum { font-weight:800; }
+  .ev { font-size:11px; font-weight:800; color:#111827; margin-top:2px; line-height:1.3; }
+  .ev.abs { text-decoration:line-through; font-weight:700; }
+  .ev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; background:#ffffff; color:#111827; border-radius:3px; padding:0 3px; margin-left:2px; font-size:9px; font-weight:700; }
+  .foot { margin-top:20px; font-size:11px; color:#6b7280; text-align:center; }
   @page { size:A4; margin:12mm; }
   @media print { .noprint { display:none; } }
 </style></head><body>
@@ -274,9 +263,9 @@ export default function SummerAdminPage() {
     <div><div class="name">${esc(stu.name)} さん</div><div class="sub">夏期講習 授業カレンダー ／ ${SUMMER_START}〜${SUMMER_END}</div></div>
     <div class="badge">${stu.site === '②' ? '② 高校生ほか' : '① 小・中学生'}</div>
   </div>
-  <div class="count">申込み授業数：<b>${mine.length}コマ</b>${mine.some(l => absOf(l.date, l.start_time)) ? '　（取り消し線＝欠席・遅刻連絡あり）' : ''}</div>
+  <div class="count">申込み授業数：${mine.length}コマ</div>
+  <div class="legend"><span class="box"></span>網掛け＝授業のある日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
   <div class="cals">${grids}</div>
-  ${listRows ? `<h2 class="lt">授業一覧</h2><table class="list"><thead><tr><th>日付</th><th>時間</th><th>状態</th><th>欠席・遅刻</th></tr></thead><tbody>${listRows}</tbody></table>` : '<p>申込み済みの授業はありません。</p>'}
   <div class="foot">大育進学センター 夏期講習</div>
   <button class="noprint" onclick="window.print()" style="position:fixed;top:12px;right:12px;padding:8px 16px;font-size:14px;background:${primary};color:#fff;border:none;border-radius:8px;cursor:pointer;">印刷 / PDF保存</button>
 </body></html>`
