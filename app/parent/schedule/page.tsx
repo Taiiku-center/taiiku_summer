@@ -41,9 +41,9 @@ export default function SummerSchedulePage() {
   const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState(false)
 
-  // スマホ幅では日ビューをデフォルトに
+  // スマホ幅では週ビューをデフォルトに
   useEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 640) setView('day')
+    if (typeof window !== 'undefined' && window.innerWidth < 640) setView('week')
   }, [])
 
   // PC drag
