@@ -219,7 +219,7 @@ export default function SummerAdminPage() {
       let rows = ''
       for (let i = 0; i < cells.length; i += 7) rows += `<tr>${cells.slice(i, i + 7).join('')}</tr>`
       const head = `<tr>${dowH.map((h, i) => `<th class="${i === 6 ? 'sun' : i === 5 ? 'sat' : ''}">${h}</th>`).join('')}</tr>`
-      return `<table class="cal"><caption>${y}年${m + 1}月</caption><thead>${head}</thead><tbody>${rows}</tbody></table>`
+      return `<table class="cal"><thead>${head}</thead><tbody>${rows}</tbody></table>`
     }
 
     // 夏期講習期間にかかる月を列挙
@@ -227,9 +227,25 @@ export default function SummerAdminPage() {
     const cur = new Date(SUMMER_START + 'T00:00:00')
     const end = new Date(SUMMER_END + 'T00:00:00')
     while (cur <= end) { monthsSet.add(`${cur.getFullYear()}-${cur.getMonth()}`); cur.setDate(cur.getDate() + 1) }
-    const grids = Array.from(monthsSet).map(k => { const [y, m] = k.split('-').map(Number); return monthGrid(y, m) }).join('')
+    const monthList = Array.from(monthsSet).map(k => k.split('-').map(Number) as [number, number])
 
     const hasAbs = mine.some(l => absOf(l.date, l.start_time))
+    const badgeLabel = stu.site === '②' ? '② 高校生ほか' : '① 小・中学生'
+
+    // 1か月＝1ページ（7月・8月を分けて両面印刷できるように）
+    const pages = monthList.map(([y, m], idx) => {
+      const cnt = mine.filter(l => { const d = new Date(l.date + 'T00:00:00'); return d.getFullYear() === y && d.getMonth() === m }).length
+      return `<section class="page">
+        <div class="head">
+          <div><div class="name">${esc(stu.name)} さん</div><div class="sub">夏期講習 授業カレンダー ／ ${SUMMER_START}〜${SUMMER_END}</div></div>
+          <div class="badge">${badgeLabel}</div>
+        </div>
+        <div class="mtitle">${y}年${m + 1}月<span class="mcount">この月の授業：${cnt}コマ</span></div>
+        <div class="legend"><span class="box"></span>網掛け＝授業のある日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
+        ${monthGrid(y, m)}
+        <div class="foot">大育進学センター 夏期講習${monthList.length > 1 ? `　（${idx + 1}/${monthList.length}ページ）` : ''}</div>
+      </section>`
+    }).join('')
 
     const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(stu.name)} 授業カレンダー</title>
 <style>
@@ -239,34 +255,28 @@ export default function SummerAdminPage() {
   .name { font-size:26px; font-weight:800; }
   .sub { font-size:13px; color:#374151; margin-top:4px; }
   .badge { border:2px solid ${primary}; color:${primary}; font-weight:800; font-size:14px; padding:6px 14px; border-radius:8px; }
-  .count { font-size:13px; color:#111827; margin-bottom:6px; font-weight:600; }
-  .legend { font-size:11px; color:#374151; margin-bottom:14px; }
-  .legend .box { display:inline-block; width:12px; height:12px; background:${light}; border:1px solid #111827; vertical-align:-1px; margin-right:3px; }
-  .cals { display:flex; flex-wrap:wrap; gap:20px; }
-  table.cal { border-collapse:collapse; width:340px; }
-  table.cal caption { text-align:left; font-weight:800; font-size:16px; margin-bottom:6px; }
-  table.cal th { font-size:11px; font-weight:700; color:#111827; padding:4px 0; border-bottom:2px solid #111827; }
-  table.cal td { width:14.28%; height:58px; vertical-align:top; border:1px solid #9ca3af; padding:3px; }
+  .mtitle { font-size:22px; font-weight:800; margin-bottom:8px; display:flex; align-items:baseline; justify-content:space-between; }
+  .mcount { font-size:13px; font-weight:600; color:#374151; }
+  .legend { font-size:12px; color:#374151; margin-bottom:12px; }
+  .legend .box { display:inline-block; width:13px; height:13px; background:${light}; border:1px solid #111827; vertical-align:-1px; margin-right:3px; }
+  .page { page-break-after: always; }
+  .page:last-child { page-break-after: auto; }
+  table.cal { border-collapse:collapse; width:100%; table-layout:fixed; }
+  table.cal th { font-size:13px; font-weight:700; color:#111827; padding:6px 0; border-bottom:2px solid #111827; }
+  table.cal td { width:14.28%; height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; }
   td.empty { background:#ffffff; border:1px solid #e5e7eb; }
   td.out { background:#f3f4f6; }
-  td.has { background:${light}; border:2px solid #111827; }
-  .dnum { font-size:11px; font-weight:700; color:#111827; }
+  td.has { background:${light}; border:2.5px solid #111827; }
+  .dnum { font-size:14px; font-weight:700; color:#111827; }
   td.has .dnum { font-weight:800; }
-  .ev { font-size:11px; font-weight:800; color:#111827; margin-top:2px; line-height:1.3; }
+  .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
   .ev.abs { text-decoration:line-through; font-weight:700; }
-  .ev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; background:#ffffff; color:#111827; border-radius:3px; padding:0 3px; margin-left:2px; font-size:9px; font-weight:700; }
-  .foot { margin-top:20px; font-size:11px; color:#6b7280; text-align:center; }
-  @page { size:A4; margin:12mm; }
+  .ev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; background:#ffffff; color:#111827; border-radius:3px; padding:0 4px; margin-left:2px; font-size:11px; font-weight:700; }
+  .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
+  @page { size:A4 portrait; margin:12mm; }
   @media print { .noprint { display:none; } }
 </style></head><body>
-  <div class="head">
-    <div><div class="name">${esc(stu.name)} さん</div><div class="sub">夏期講習 授業カレンダー ／ ${SUMMER_START}〜${SUMMER_END}</div></div>
-    <div class="badge">${stu.site === '②' ? '② 高校生ほか' : '① 小・中学生'}</div>
-  </div>
-  <div class="count">申込み授業数：${mine.length}コマ</div>
-  <div class="legend"><span class="box"></span>網掛け＝授業のある日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
-  <div class="cals">${grids}</div>
-  <div class="foot">大育進学センター 夏期講習</div>
+  ${pages}
   <button class="noprint" onclick="window.print()" style="position:fixed;top:12px;right:12px;padding:8px 16px;font-size:14px;background:${primary};color:#fff;border:none;border-radius:8px;cursor:pointer;">印刷 / PDF保存</button>
 </body></html>`
 
