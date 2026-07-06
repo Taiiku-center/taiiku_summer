@@ -230,7 +230,6 @@ export default function SummerAdminPage() {
     const monthList = Array.from(monthsSet).map(k => k.split('-').map(Number) as [number, number])
 
     const hasAbs = mine.some(l => absOf(l.date, l.start_time))
-    const badgeLabel = stu.site === '②' ? '② 高校生ほか' : '① 小・中学生'
 
     // 1か月＝1ページ（7月・8月を分けて両面印刷できるように）
     const pages = monthList.map(([y, m], idx) => {
@@ -238,10 +237,9 @@ export default function SummerAdminPage() {
       return `<section class="page">
         <div class="head">
           <div><div class="name">${esc(stu.name)} さん</div><div class="sub">夏期講習 授業カレンダー ／ ${SUMMER_START}〜${SUMMER_END}</div></div>
-          <div class="badge">${badgeLabel}</div>
         </div>
         <div class="mtitle">${y}年${m + 1}月<span class="mcount">この月の授業：${cnt}コマ</span></div>
-        <div class="legend"><span class="box"></span>網掛け＝授業のある日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
+        <div class="legend"><span class="box"></span>授業のある日　<span class="boxg"></span>授業のない日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
         ${monthGrid(y, m)}
         <div class="foot">大育進学センター 夏期講習${monthList.length > 1 ? `　（${idx + 1}/${monthList.length}ページ）` : ''}</div>
       </section>`
@@ -258,15 +256,16 @@ export default function SummerAdminPage() {
   .mtitle { font-size:22px; font-weight:800; margin-bottom:8px; display:flex; align-items:baseline; justify-content:space-between; }
   .mcount { font-size:13px; font-weight:600; color:#374151; }
   .legend { font-size:12px; color:#374151; margin-bottom:12px; }
-  .legend .box { display:inline-block; width:13px; height:13px; background:${light}; border:1px solid #111827; vertical-align:-1px; margin-right:3px; }
+  .legend .box { display:inline-block; width:13px; height:13px; background:#ffffff; border:2px solid #111827; vertical-align:-1px; margin-right:3px; }
+  .legend .boxg { display:inline-block; width:13px; height:13px; background:${light}; border:1px solid #9ca3af; vertical-align:-1px; margin-right:3px; }
   .page { page-break-after: always; }
   .page:last-child { page-break-after: auto; }
   table.cal { border-collapse:collapse; width:100%; table-layout:fixed; }
   table.cal th { font-size:13px; font-weight:700; color:#111827; padding:6px 0; border-bottom:2px solid #111827; }
-  table.cal td { width:14.28%; height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; }
+  table.cal td { width:14.28%; height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; background:${light}; }
   td.empty { background:#ffffff; border:1px solid #e5e7eb; }
-  td.out { background:#f3f4f6; }
-  td.has { background:${light}; border:2.5px solid #111827; }
+  td.out { background:${light}; }
+  td.has { background:#ffffff; border:2.5px solid #111827; }
   .dnum { font-size:14px; font-weight:700; color:#111827; }
   td.has .dnum { font-weight:800; }
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
