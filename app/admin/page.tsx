@@ -263,9 +263,9 @@ export default function SummerAdminPage() {
   table.cal { border-collapse:collapse; width:100%; table-layout:fixed; }
   table.cal th { font-size:13px; font-weight:700; color:#111827; padding:6px 0; border-bottom:2px solid #111827; }
   table.cal td { width:14.28%; height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; background:${light}; }
-  td.empty { background:#ffffff; border:1px solid #e5e7eb; }
-  td.out { background:${light}; }
-  td.has { background:#ffffff; border:2.5px solid #111827; }
+  table.cal td.empty { background:#ffffff; border:1px solid #e5e7eb; }
+  table.cal td.out { background:${light}; }
+  table.cal td.has { background:#ffffff; border:2.5px solid #111827; }
   .dnum { font-size:14px; font-weight:700; color:#111827; }
   td.has .dnum { font-weight:800; }
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
