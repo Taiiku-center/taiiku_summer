@@ -11,15 +11,6 @@ const DOW = ['月', '火', '水', '木', '金', '土', '日']
 const STATUS_COLOR: Record<string, string> = { pending: 'bg-yellow-100 text-yellow-800', confirmed: 'bg-green-100 text-green-800' }
 const STATUS_LABEL: Record<string, string> = { pending: '申請済', confirmed: '確定' }
 
-function SiteBadge({ site }: { site: '①' | '②' }) {
-  return (
-    <span className={`inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded mr-1 align-middle
-      ${site === '②' ? 'bg-purple-100 text-purple-700' : 'bg-sky-100 text-sky-700'}`}>
-      {site === '②' ? '②高' : '①小中'}
-    </span>
-  )
-}
-
 // 生徒ごとの固定色（名前から決定的に割り当て）
 const STUDENT_PALETTE = [
   { bg: 'bg-red-100',     text: 'text-red-800',     bar: 'bg-red-400',     dot: 'bg-red-500' },
@@ -314,7 +305,7 @@ export default function SummerAdminPage() {
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${sc.dot}`} />
                         <div>
-                          <div className="text-sm font-bold text-gray-800"><SiteBadge site={l.site} />{l.full_name}</div>
+                          <div className="text-sm font-bold text-gray-800">{l.full_name}</div>
                           {abs && <div className="text-xs text-orange-600 mt-0.5">⚠ {abs.type}・振替：{abs.make_up_request}</div>}
                         </div>
                       </div>
@@ -395,7 +386,7 @@ export default function SummerAdminPage() {
           className="flex-1 min-w-[160px] max-w-xs text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700">
           <option value="">生徒を選択…</option>
           {students.map(s => (
-            <option key={s.id} value={s.id}>{s.site}　{s.name}</option>
+            <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
         <button onClick={() => printStudentId && printStudentCalendar(printStudentId)}
@@ -538,7 +529,7 @@ export default function SummerAdminPage() {
                                     const sc = colorOf(l.full_name)
                                     return (
                                     <div key={l.id} className={`rounded px-1.5 py-1 leading-snug font-medium text-xs flex items-center gap-0.5 ${sc.bg} ${sc.text} ${l.status !== 'confirmed' ? 'ring-1 ring-inset ring-gray-400/40' : ''}`}>
-                                      <span className="font-bold opacity-60">{l.site}</span>{l.full_name}{l.status !== 'confirmed' && <span className="opacity-60">(申)</span>}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
+                                      {l.full_name}{l.status !== 'confirmed' && <span className="opacity-60">(申)</span>}{cA.some(a => a.full_name === l.full_name) && <span className="text-orange-500 ml-0.5">⚠</span>}
                                     </div>
                                     )
                                   })}
@@ -571,7 +562,7 @@ export default function SummerAdminPage() {
                           <div key={l.id} className={`flex items-stretch gap-3 rounded-xl p-3 overflow-hidden relative ${sc.bg}`}>
                             <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${sc.bar}`} />
                             <div className="flex-1 pl-1.5">
-                              <div className="font-semibold text-gray-800 text-sm"><SiteBadge site={l.site} />{l.full_name}</div>
+                              <div className="font-semibold text-gray-800 text-sm">{l.full_name}</div>
                               {abs && <div className="text-xs text-orange-600 mt-0.5">{abs.type}・振替：{abs.make_up_request}{abs.note && `（${abs.note}）`}</div>}
                             </div>
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[l.status] || 'bg-gray-100 text-gray-600'}`}>{STATUS_LABEL[l.status] || l.status}</span>
