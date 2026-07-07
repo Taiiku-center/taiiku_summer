@@ -135,3 +135,28 @@ export function setSession(student: SummerStudent) {
 export function clearSession() {
   localStorage.removeItem(SESSION_KEY)
 }
+
+// コース申込みフロー：コース選択画面 → 日程選択（/parent/schedule）へ受け渡す選択中コース
+export type SelectedCourse = {
+  category: '小学生' | '中学生'
+  id: string
+  name: string
+  hours: number
+}
+
+const SELECTED_COURSE_KEY = 'summer_selected_course'
+
+export function setSelectedCourse(c: SelectedCourse) {
+  if (typeof window !== 'undefined') sessionStorage.setItem(SELECTED_COURSE_KEY, JSON.stringify(c))
+}
+
+export function getSelectedCourse(): SelectedCourse | null {
+  try {
+    const s = typeof window !== 'undefined' ? sessionStorage.getItem(SELECTED_COURSE_KEY) : null
+    return s ? JSON.parse(s) : null
+  } catch { return null }
+}
+
+export function clearSelectedCourse() {
+  if (typeof window !== 'undefined') sessionStorage.removeItem(SELECTED_COURSE_KEY)
+}

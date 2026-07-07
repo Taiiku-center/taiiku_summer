@@ -1,8 +1,12 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { Suspense, useEffect, useRef, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
-import { getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, type SummerLesson, type SummerStudent } from '../../lib'
+import {
+  getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END,
+  getSelectedCourse, clearSelectedCourse,
+  type SummerLesson, type SummerStudent, type SelectedCourse,
+} from '../../lib'
 
 const DAYS_JP = ['月', '火', '水', '木', '金', '土', '日']
 const NOTIFY_EMAIL = 'kusunoki.infinite@gmail.com'
@@ -32,8 +36,25 @@ async function sendEmail(subject: string, body: string) {
 
 type View = 'month' | 'week' | 'day'
 
+type CourseStep = 'schedule' | 'confirm' | 'done'
+
 export default function SummerSchedulePage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400">読み込み中...</div>}>
+      <SummerScheduleInner />
+    </Suspense>
+  )
+}
+
+function SummerScheduleInner() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const isCourseMode = searchParams.get('course') === '1'
+  const [courseInfo, setCourseInfo] = useState<SelectedCourse | null>(null)
+  const [courseStep, setCourseStep] = useState<CourseStep>('schedule')
+  const [courseSaving, setCourseSaving] = useState(false)
+  const [courseError, setCourseError] = useState('')
+
   const [student, setStudent] = useState<SummerStudent | null>(null)
   const [existing, setExisting] = useState<SummerLesson[]>([])
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -47,6 +68,13 @@ export default function SummerSchedulePage() {
   const [msgIsError, setMsgIsError] = useState(false)
   const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
   const [cancelConfirm, setCancelConfirm] = useState(false)
+
+  useEffect(() => {
+    if (!isCourseMode) return
+    const c = getSelectedCourse()
+    if (!c) { router.replace('/parent/apply'); return }
+    setCourseInfo(c)
+  }, [isCourseMode, router])
 
   // スマホ幅では週ビューをデフォルトに
   useEffect(() => {
@@ -130,6 +158,55 @@ export default function SummerSchedulePage() {
       setMsgIsError(false)
       setSelected(new Set())
     }
+    await fetchExisting()
+  }
+
+  const courseRequiredHours = courseInfo?.hours ?? 0
+  const courseRequiredSlots = courseRequiredHours * 2
+  const courseSelectedHours = selected.size * 0.5
+  const courseCanProceed = selected.size >= courseRequiredSlots && selected.size > 0
+
+  async function handleCourseSubmit() {
+    if (!student || !courseInfo || !courseCanProceed) return
+    setCourseSaving(true); setCourseError('')
+    const supabase = createClient()
+    const { data: app, error: appErr } = await supabase.from('summer_course_applications').insert({
+      student_id: student.id, full_name: student.full_name,
+      course_category: courseInfo.category, course_name: courseInfo.name,
+      required_hours: courseRequiredHours, total_hours: courseSelectedHours, status: 'pending',
+    }).select('id').single()
+    if (appErr || !app) {
+      setCourseError(`申込みに失敗しました。${appErr?.message ? `（${appErr.message}）` : ''}`)
+      setCourseSaving(false); return
+    }
+    const rows = Array.from(selected).map(k => {
+      const sep = k.indexOf('__')
+      const ds = k.slice(0, sep), slot = k.slice(sep + 2)
+      return {
+        student_id: student.id, full_name: student.full_name, date: ds, start_time: slot, end_time: endTime(slot),
+        status: 'pending', application_id: app.id, course_name: courseInfo.name,
+      }
+    })
+    const { error: lessonErr } = await supabase.from('summer_lessons').insert(rows)
+    if (lessonErr) {
+      await supabase.from('summer_course_applications').delete().eq('id', app.id)
+      setCourseError(`日程の登録に失敗しました。${lessonErr.message ? `（${lessonErr.message}）` : ''}`)
+      setCourseSaving(false); return
+    }
+    await supabase.from('summer_notifications').insert({
+      type: 'lesson', title: '夏期講習のコース申込みがありました',
+      message: `${student.full_name}（${courseInfo.category} ${courseInfo.name}／${courseRequiredHours}H）`, is_read: false,
+    })
+    sendEmail(
+      `【コース申込】${student.full_name} ${courseInfo.category} ${courseInfo.name}`,
+      `${student.full_name} さんが夏期講習を申し込みました。\nコース：${courseInfo.category} ${courseInfo.name}\n必要時間数：${courseRequiredHours}H\n日程：\n` +
+        rows.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
+          .map(r => `・${r.date} ${r.start_time}〜${r.end_time}`).join('\n') + `\n合計：${courseSelectedHours}H\n管理画面でご確認ください。`,
+    )
+    clearSelectedCourse()
+    setCourseSaving(false)
+    setCourseStep('done')
+    setSelected(new Set())
     await fetchExisting()
   }
 
@@ -265,16 +342,108 @@ export default function SummerSchedulePage() {
     return { dateStr, timeStr: `${lesson.start_time}〜${lesson.end_time}` }
   }
 
+  // ══ コース申込みモード：完了画面 ══
+  if (isCourseMode && courseStep === 'done') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
+        <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm text-center space-y-4">
+          <div className="text-5xl">🎉</div>
+          <h2 className="text-xl font-bold text-gray-800">夏期講習のお申込みを受け付けました</h2>
+          <p className="text-sm text-gray-500 leading-relaxed">お申込みありがとうございます。<br />内容を確認のうえ、必要に応じて教室よりご連絡いたします。</p>
+          {courseInfo && (
+            <div className="bg-blue-50 rounded-2xl p-4 text-left text-sm space-y-1">
+              <div className="flex justify-between"><span className="text-gray-500">コース</span><span className="font-bold text-blue-700">{courseInfo.category} {courseInfo.name}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">合計時間数</span><span className="font-bold text-blue-700">{courseSelectedHours}H</span></div>
+            </div>
+          )}
+          <button onClick={() => router.push('/parent')} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl active:bg-blue-700">ホームに戻る</button>
+          <button onClick={() => router.push('/parent/calendar')} className="w-full border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-2xl text-sm">授業予定を確認する</button>
+        </div>
+      </div>
+    )
+  }
+
+  // ══ コース申込みモード：確認画面 ══
+  if (isCourseMode && courseStep === 'confirm' && courseInfo) {
+    const sortedSelected = Array.from(selected).map(k => {
+      const sep = k.indexOf('__')
+      return { ds: k.slice(0, sep), slot: k.slice(sep + 2) }
+    }).sort((a, b) => a.ds < b.ds ? -1 : a.ds > b.ds ? 1 : a.slot < b.slot ? -1 : 1)
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="px-4 py-3 flex items-center gap-3">
+            <button onClick={() => setCourseStep('schedule')} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
+            <h1 className="text-base font-bold text-gray-800">申込み内容を確認してください</h1>
+          </div>
+        </header>
+        <main className="max-w-2xl mx-auto px-4 py-5 space-y-4">
+          <p className="text-sm text-gray-500">内容に間違いがないかご確認ください。</p>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">生徒名</span><span className="text-sm font-bold text-gray-800">{student.full_name}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">必要時間数</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">合計時間数</span><span className="text-sm font-bold text-blue-600">{courseSelectedHours}H</span></div>
+          </div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div className="px-5 py-3 border-b border-gray-100 text-sm font-semibold text-gray-600">選択した日程（{sortedSelected.length}コマ）</div>
+            <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
+              {sortedSelected.map(({ ds, slot }, i) => (
+                <div key={i} className="flex items-center justify-between px-5 py-3">
+                  <span className="text-sm text-gray-700">{new Date(ds + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' })}</span>
+                  <span className="text-sm font-medium text-gray-800">{slot}〜{endTime(slot)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          {courseError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 text-center">{courseError}</div>}
+          <div className="flex gap-2">
+            <button onClick={() => setCourseStep('schedule')} disabled={courseSaving} className="flex-1 border-2 border-gray-200 text-gray-600 font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-gray-50">戻って修正する</button>
+            <button onClick={handleCourseSubmit} disabled={courseSaving} className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700">{courseSaving ? '送信中...' : 'この内容で申込む'}</button>
+          </div>
+        </main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => router.back()} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
-          <h1 className="text-base font-bold text-gray-800">授業を申し込む</h1>
+          <button onClick={() => router.push(isCourseMode ? '/parent/apply' : '/parent')} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
+          <h1 className="text-base font-bold text-gray-800">{isCourseMode ? '受講日程を選択してください' : '授業を申し込む'}</h1>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-3 py-4 space-y-4">
+        {isCourseMode && courseInfo && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-gray-500">選択中のコース</span>
+              <span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span>
+            </div>
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+              <span className="text-sm text-gray-500">必要時間数</span>
+              <span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span>
+            </div>
+            <div className="mt-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm text-gray-500">選択済み</span>
+                <span className={`text-base font-bold ${courseSelectedHours >= courseRequiredHours ? 'text-green-600' : 'text-blue-600'}`}>{courseSelectedHours}H／{courseRequiredHours}H</span>
+              </div>
+              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                <div className={`h-full rounded-full transition-all ${courseSelectedHours >= courseRequiredHours ? 'bg-green-500' : 'bg-blue-500'}`}
+                  style={{ width: `${Math.min(100, (courseSelectedHours / courseRequiredHours) * 100)}%` }} />
+              </div>
+              {courseSelectedHours < courseRequiredHours
+                ? <div className="text-xs text-gray-400 mt-1.5">あと {courseRequiredHours - courseSelectedHours}H 選んでください</div>
+                : courseSelectedHours === courseRequiredHours
+                  ? <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>
+                  : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数を {courseSelectedHours - courseRequiredHours}H 超えています（このまま進めます）。</div>}
+            </div>
+          </div>
+        )}
+
         <div className="flex items-center gap-2">
           <div className="flex bg-gray-100 rounded-xl p-1 gap-1">
             {(['month','week','day'] as View[]).map(v => (
@@ -437,7 +606,7 @@ export default function SummerSchedulePage() {
           )
         })()}
 
-        {msg && (
+        {!isCourseMode && msg && (
           <div className={`rounded-xl px-4 py-3 text-sm font-bold flex items-center justify-between gap-3
             ${msgIsError ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-700'}`}>
             <span>{msg}</span>
@@ -450,12 +619,19 @@ export default function SummerSchedulePage() {
           </div>
         )}
 
-        {view !== 'month' && (
+        {view !== 'month' && !isCourseMode && (
           <button onClick={handleSubmit} disabled={saving || selected.size === 0}
             className="w-full bg-blue-600 text-white py-4 rounded-2xl text-base font-medium active:bg-blue-700 disabled:opacity-50">
             {saving ? '送信中...' : view === 'day'
               ? `${displayTitle()}の内容で申込む（${formatDuration(selected.size * 30)}）`
               : `この内容で申込む（${formatDuration(selected.size * 30)}）`}
+          </button>
+        )}
+
+        {view !== 'month' && isCourseMode && courseInfo && (
+          <button onClick={() => setCourseStep('confirm')} disabled={!courseCanProceed}
+            className="w-full bg-blue-600 text-white py-4 rounded-2xl text-base font-medium active:bg-blue-700 disabled:opacity-50">
+            {courseCanProceed ? '確認画面へ進む' : `あと ${courseRequiredHours - courseSelectedHours}H 選んでください`}
           </button>
         )}
       </main>
