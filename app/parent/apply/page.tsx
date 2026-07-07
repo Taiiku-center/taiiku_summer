@@ -327,10 +327,7 @@ export default function SummerApplyPage() {
                 </div>
               </div>
             ))}
-            <button onClick={() => { if (course) setStep('schedule') }} disabled={!course}
-              className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700 transition-colors mt-2">
-              {course ? 'このコースで日程を選ぶ' : 'コースを選択してください'}
-            </button>
+            <div className="h-16" />
           </>
         )}
 
@@ -547,6 +544,17 @@ export default function SummerApplyPage() {
           </>
         )}
       </main>
+
+      {step === 'course' && (
+        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-3 z-20">
+          <div className="max-w-4xl mx-auto">
+            <button onClick={() => { if (course) setStep('schedule') }} disabled={!course}
+              className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700 transition-colors">
+              {course ? 'このコースで日程を選ぶ' : 'コースを選択してください'}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
