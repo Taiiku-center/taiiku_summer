@@ -416,18 +416,18 @@ export default function SummerApplyPage() {
                 <div className="overflow-x-auto" onContextMenu={e => e.preventDefault()} onPointerUp={onCellPointerUp} onPointerLeave={onCellPointerUp}>
                   <div className="min-w-[360px] overflow-y-auto" style={{ maxHeight: '60vh', WebkitUserSelect: 'none', userSelect: 'none' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '52px repeat(6, 1fr)' }}>
-                      <div className="border-b border-r border-gray-200 bg-white sticky top-0 left-0 z-20" />
+                      <div className="border-b border-r border-gray-300 bg-white sticky top-0 left-0 z-20" />
                       {w.slice(0, 6).map((d, i) => {
                         const inS = isInSummer(d)
                         return (
-                          <div key={i} className={`border-b border-r border-gray-200 py-2 text-center text-xs font-bold leading-tight bg-white sticky top-0 z-10 ${i === 5 ? 'text-blue-500' : 'text-gray-600'} ${!inS ? 'opacity-30' : ''}`}>
+                          <div key={i} className={`border-b border-r border-gray-300 py-2 text-center text-xs font-bold leading-tight bg-white sticky top-0 z-10 ${i === 5 ? 'text-blue-500' : 'text-gray-600'} ${!inS ? 'opacity-30' : ''}`}>
                             {DAYS_JP[i]}<br /><span className="font-normal text-gray-400">{d.getMonth() + 1}/{d.getDate()}</span>
                           </div>
                         )
                       })}
                       {TIME_SLOTS.map(slot => (
                         <div key={slot} className="contents">
-                          <div className="border-b border-r border-gray-200 flex items-center justify-end pr-1.5 text-xs text-gray-400 h-10 whitespace-nowrap bg-white sticky left-0 z-[5]">{slot}</div>
+                          <div className="border-b border-r border-gray-300 flex items-center justify-end pr-1.5 text-xs text-gray-400 h-10 whitespace-nowrap bg-white sticky left-0 z-[5]">{slot}</div>
                           {w.slice(0, 6).map((d, di) => {
                             const sel = selected.has(key(d, slot))
                             const inS = isInSummer(d)
@@ -441,7 +441,7 @@ export default function SummerApplyPage() {
                                 onPointerMove={onCellPointerMove}
                                 onPointerUp={onCellPointerUp}
                                 onClick={() => handleCellClick(d, slot)}
-                                className={`border-b border-r border-gray-200 h-10 transition-colors
+                                className={`border-b border-r border-gray-300 h-10 transition-colors
                                   ${sel ? 'bg-blue-400 cursor-pointer' :
                                     booked ? 'bg-sky-200 cursor-not-allowed' :
                                     !inS || blocked ? 'bg-gray-50 cursor-not-allowed' :
