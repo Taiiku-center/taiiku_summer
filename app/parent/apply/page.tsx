@@ -213,7 +213,11 @@ export default function SummerApplyPage() {
       course_category: category, course_name: course.name,
       required_hours: requiredHours, total_hours: selectedHours, status: 'pending',
     }).select('id').single()
-    if (appErr || !app) { setError('申込みに失敗しました。時間をおいて再度お試しください。'); setSaving(false); return }
+    if (appErr || !app) {
+      console.error('summer_course_applications insert error', appErr)
+      setError(`申込みに失敗しました。${appErr?.message ? `（${appErr.message}）` : ''}`)
+      setSaving(false); return
+    }
 
     const rows = Array.from(selected).map(k => {
       const [ds, slot] = k.split('__')
@@ -221,8 +225,10 @@ export default function SummerApplyPage() {
     })
     const { error: lessonErr } = await supabase.from('summer_lessons').insert(rows)
     if (lessonErr) {
+      console.error('summer_lessons insert error', lessonErr)
       await supabase.from('summer_course_applications').delete().eq('id', app.id)
-      setError('日程の登録に失敗しました。時間をおいて再度お試しください。'); setSaving(false); return
+      setError(`日程の登録に失敗しました。${lessonErr.message ? `（${lessonErr.message}）` : ''}`)
+      setSaving(false); return
     }
     await supabase.from('summer_notifications').insert({
       type: 'lesson', title: '夏期講習のコース申込みがありました',
