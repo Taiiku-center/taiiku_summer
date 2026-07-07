@@ -282,7 +282,7 @@ export default function SummerApplyPage() {
         </div>
       </header>
 
-      <main className="px-4 py-5 max-w-4xl mx-auto space-y-4 pb-28">
+      <main className="px-4 py-5 max-w-4xl mx-auto space-y-4 pb-10">
 
         {/* ══ ③ コース選択 ══ */}
         {step === 'course' && (
@@ -327,6 +327,10 @@ export default function SummerApplyPage() {
                 </div>
               </div>
             ))}
+            <button onClick={() => { if (course) setStep('schedule') }} disabled={!course}
+              className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700 transition-colors mt-2">
+              {course ? 'このコースで日程を選ぶ' : 'コースを選択してください'}
+            </button>
           </>
         )}
 
@@ -503,6 +507,11 @@ export default function SummerApplyPage() {
                 </div>
               )
             })()}
+
+            <button onClick={() => setStep('confirm')} disabled={!canProceed}
+              className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700 transition-colors">
+              {canProceed ? '確認画面へ進む' : `あと ${requiredHours - selectedHours}H 選んでください`}
+            </button>
           </>
         )}
 
@@ -531,39 +540,13 @@ export default function SummerApplyPage() {
               </div>
             </div>
             {error && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 text-center">{error}</div>}
+            <div className="flex gap-2">
+              <button onClick={() => setStep('schedule')} disabled={saving} className="flex-1 border-2 border-gray-200 text-gray-600 font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-gray-50">戻って修正する</button>
+              <button onClick={handleSubmit} disabled={saving} className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700">{saving ? '送信中...' : 'この内容で申込む'}</button>
+            </div>
           </>
         )}
       </main>
-
-      {/* 下部固定ボタン */}
-      {step === 'course' && (
-        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-3">
-          <div className="max-w-4xl mx-auto">
-            <button onClick={() => { if (course) setStep('schedule') }} disabled={!course}
-              className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700 transition-colors">
-              {course ? 'このコースで日程を選ぶ' : 'コースを選択してください'}
-            </button>
-          </div>
-        </div>
-      )}
-      {step === 'schedule' && (
-        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-3">
-          <div className="max-w-4xl mx-auto">
-            <button onClick={() => setStep('confirm')} disabled={!canProceed}
-              className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700 transition-colors">
-              {canProceed ? '確認画面へ進む' : `あと ${requiredHours - selectedHours}H 選んでください`}
-            </button>
-          </div>
-        </div>
-      )}
-      {step === 'confirm' && (
-        <div className="fixed bottom-0 inset-x-0 bg-white border-t border-gray-100 px-4 py-3">
-          <div className="max-w-4xl mx-auto flex gap-2">
-            <button onClick={() => setStep('schedule')} disabled={saving} className="flex-1 border-2 border-gray-200 text-gray-600 font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-gray-50">戻って修正する</button>
-            <button onClick={handleSubmit} disabled={saving} className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700">{saving ? '送信中...' : 'この内容で申込む'}</button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
