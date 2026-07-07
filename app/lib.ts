@@ -40,7 +40,50 @@ export type SummerLesson = {
   end_time: string
   status: 'pending' | 'confirmed' | 'cancelled'
   created_at: string
+  application_id?: string | null
+  course_name?: string | null
 }
+
+export type SummerCourseApplication = {
+  id: string
+  student_id: string
+  full_name: string
+  course_category: '小学生' | '中学生'
+  course_name: string
+  required_hours: number
+  total_hours: number
+  status: 'pending' | 'confirmed' | 'cancelled'
+  created_at: string
+}
+
+// 1時間帯（30分）あたりの定員（満席判定に使用）
+export const SLOT_CAPACITY = 8
+
+export type SummerCourse = {
+  id: string
+  name: string
+  hours: number
+  example: string
+  popular?: boolean
+}
+
+export const ELEMENTARY_COURSES: SummerCourse[] = [
+  { id: 'e-check',      name: '苦手単元チェックコース',     hours: 10, example: '10日 × 1h' },
+  { id: 'e-kiso',       name: '基礎固めコース',             hours: 15, example: '15日 × 1h' },
+  { id: 'e-standard',   name: '夏休み標準コース',           hours: 20, example: '20日 × 1h' },
+  { id: 'e-shuchu',     name: '苦手克服集中コース',         hours: 20, example: '10日 × 2h' },
+  { id: 'e-jitsuryoku', name: '実力アップしっかりコース',   hours: 30, example: '15日 × 2h', popular: true },
+  { id: 'e-free',       name: 'フリーコース',               hours: 40, example: '20日 × 2h' },
+]
+
+export const JUNIOR_COURSES: SummerCourse[] = [
+  { id: 'j-check',      name: '苦手単元確認コース',         hours: 20, example: '10日 × 2h' },
+  { id: 'j-kiso',       name: '基礎固めコース',             hours: 30, example: '15日 × 2h' },
+  { id: 'j-standard',   name: '夏休み標準コース',           hours: 40, example: '20日 × 2h' },
+  { id: 'j-shuchu',     name: '苦手克服集中コース',         hours: 30, example: '10日 × 3h' },
+  { id: 'j-jitsuryoku', name: '実力アップしっかりコース',   hours: 30, example: '15日 × 3h', popular: true },
+  { id: 'j-free',       name: 'フリーコース',               hours: 60, example: '20日 × 3h' },
+]
 
 export type SummerAbsence = {
   id: string

@@ -350,6 +350,7 @@ export default function SummerAdminPage() {
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex gap-2 overflow-x-auto">
         {[
           { label: '📋 カレンダー', href: '/admin', active: true },
+          { label: '🎒 コース申込み', href: '/admin/applications' },
           { label: '📢 欠席・遅刻', href: '/admin/absences' },
           { label: '🔧 不具合', href: '/admin/bugs' },
           { label: '🔔 通知', href: '/admin/notifications' },

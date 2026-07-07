@@ -16,7 +16,6 @@ export default function SummerParentPage() {
   if (!student) return <div className="min-h-screen flex items-center justify-center text-gray-400">読み込み中...</div>
 
   const menus = [
-    { label: '授業を申し込む',       sub: '希望の日時を選んで申込み',   emoji: '📅', href: '/parent/schedule',   bg: 'bg-blue-500',   shadow: 'shadow-blue-100' },
     { label: '欠席・遅刻を連絡する', sub: '欠席・遅刻・振替希望の連絡', emoji: '📢', href: '/parent/absence',         bg: 'bg-orange-500', shadow: 'shadow-orange-100' },
     { label: '欠席・遅刻の履歴',     sub: '連絡履歴の確認・キャンセル', emoji: '📝', href: '/parent/absence/history', bg: 'bg-amber-400',  shadow: 'shadow-amber-100' },
     { label: '授業予定を確認する',   sub: '申込み済みの授業カレンダー', emoji: '📋', href: '/parent/calendar',        bg: 'bg-green-500',  shadow: 'shadow-green-100' },
@@ -42,6 +41,17 @@ export default function SummerParentPage() {
           <h2 className="text-xl font-bold text-gray-800">2026年 夏期講習</h2>
           <p className="text-sm text-gray-400 mt-1">7月20日（月）〜 8月29日（土）</p>
         </div>
+
+        {/* コース申込み導線 */}
+        <button onClick={() => router.push('/parent/apply')}
+          className="w-full mb-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl shadow-lg shadow-blue-200 px-6 py-5 flex items-center gap-4 active:scale-[0.98] hover:shadow-xl transition-all text-left">
+          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">🎒</div>
+          <div className="flex-1 min-w-0">
+            <div className="text-lg font-bold">夏期講習の授業を申込む</div>
+            <div className="text-sm text-blue-50 mt-0.5">コースを選んで日程を申込みます</div>
+          </div>
+          <span className="text-white/80 text-2xl flex-shrink-0">›</span>
+        </button>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {menus.map(m => (
