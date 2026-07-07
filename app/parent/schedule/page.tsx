@@ -436,7 +436,7 @@ function SummerScheduleInner() {
                   style={{ width: `${Math.min(100, (courseSelectedHours / courseRequiredHours) * 100)}%` }} />
               </div>
               {courseSelectedHours < courseRequiredHours
-                ? <div className="text-xs text-gray-400 mt-1.5">あと {courseRequiredHours - courseSelectedHours}H 選んでください</div>
+                ? <div className="text-xs text-gray-400 mt-1.5">{courseSelectedHours}H 選択中です</div>
                 : courseSelectedHours === courseRequiredHours
                   ? <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>
                   : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数を {courseSelectedHours - courseRequiredHours}H 超えています（このまま進めます）。</div>}
@@ -631,7 +631,7 @@ function SummerScheduleInner() {
         {view !== 'month' && isCourseMode && courseInfo && (
           <button onClick={() => setCourseStep('confirm')} disabled={!courseCanProceed}
             className="w-full bg-blue-600 text-white py-4 rounded-2xl text-base font-medium active:bg-blue-700 disabled:opacity-50">
-            {courseCanProceed ? '確認画面へ進む' : `あと ${courseRequiredHours - courseSelectedHours}H 選んでください`}
+            {courseCanProceed ? '確認画面へ進む' : `${courseSelectedHours}H 選択中です`}
           </button>
         )}
       </main>
