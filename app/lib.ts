@@ -64,25 +64,28 @@ export type SummerCourse = {
   name: string
   hours: number
   example: string
+  target: string       // こんな人向け
   popular?: boolean
 }
 
+// 小学生：1日1時間〜2時間
 export const ELEMENTARY_COURSES: SummerCourse[] = [
-  { id: 'e-check',      name: '苦手単元チェックコース',     hours: 10, example: '10日 × 1h' },
-  { id: 'e-kiso',       name: '基礎固めコース',             hours: 15, example: '15日 × 1h' },
-  { id: 'e-standard',   name: '夏休み標準コース',           hours: 20, example: '20日 × 1h' },
-  { id: 'e-shuchu',     name: '苦手克服集中コース',         hours: 20, example: '10日 × 2h' },
-  { id: 'e-jitsuryoku', name: '実力アップしっかりコース',   hours: 30, example: '15日 × 2h', popular: true },
-  { id: 'e-free',       name: 'フリーコース',               hours: 40, example: '20日 × 2h' },
+  { id: 'e-check',      name: '苦手単元チェックコース',   hours: 10, example: '10日 × 1h', target: 'まず苦手を確認したい' },
+  { id: 'e-kiso',       name: '基礎固めコース',           hours: 15, example: '15日 × 1h', target: '基礎をしっかり定着させたい' },
+  { id: 'e-standard',   name: '夏休み標準コース',         hours: 20, example: '20日 × 1h', target: '夏休み全体で着実に進めたい' },
+  { id: 'e-shuchu',     name: '苦手克服集中コース',       hours: 20, example: '10日 × 2h', target: '短期間で集中して克服したい' },
+  { id: 'e-jitsuryoku', name: '実力アップしっかりコース', hours: 30, example: '15日 × 2h', target: '複数の苦手をまとめて解消したい', popular: true },
+  { id: 'e-free',       name: 'フリーコース',             hours: 40, example: '20日 × 2h', target: '夏休みを全力で使い切りたい' },
 ]
 
+// 中学生：1日2時間〜3時間
 export const JUNIOR_COURSES: SummerCourse[] = [
-  { id: 'j-check',      name: '苦手単元確認コース',         hours: 20, example: '10日 × 2h' },
-  { id: 'j-kiso',       name: '基礎固めコース',             hours: 30, example: '15日 × 2h' },
-  { id: 'j-standard',   name: '夏休み標準コース',           hours: 40, example: '20日 × 2h' },
-  { id: 'j-shuchu',     name: '苦手克服集中コース',         hours: 30, example: '10日 × 3h' },
-  { id: 'j-jitsuryoku', name: '実力アップしっかりコース',   hours: 30, example: '15日 × 3h', popular: true },
-  { id: 'j-free',       name: 'フリーコース',               hours: 60, example: '20日 × 3h' },
+  { id: 'j-check',      name: '苦手単元確認コース',       hours: 20, example: '10日 × 2h', target: 'まず苦手の場所を整理したい' },
+  { id: 'j-kiso',       name: '基礎固めコース',           hours: 30, example: '15日 × 2h', target: '1学期の穴を確実につぶしたい' },
+  { id: 'j-standard',   name: '夏休み標準コース',         hours: 40, example: '20日 × 2h', target: '定期テストに向けて準備したい' },
+  { id: 'j-shuchu',     name: '苦手克服集中コース',       hours: 30, example: '10日 × 3h', target: '集中して苦手を一気に解消したい' },
+  { id: 'j-jitsuryoku', name: '実力アップしっかりコース', hours: 30, example: '15日 × 3h', target: '複数教科を受験・テストに向けて仕上げたい', popular: true },
+  { id: 'j-free',       name: 'フリーコース',             hours: 60, example: '20日 × 3h', target: '通い放題の2か月で、夏休みを全力で大きく伸ばしたい' },
 ]
 
 export type SummerAbsence = {

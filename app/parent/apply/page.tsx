@@ -221,10 +221,11 @@ export default function SummerApplyPage() {
               </p>
             </div>
 
-            {([['小学生', ELEMENTARY_COURSES], ['中学生', JUNIOR_COURSES]] as const).map(([cat, list]) => (
+            {([['小学生', ELEMENTARY_COURSES, '1日1時間〜2時間'], ['中学生', JUNIOR_COURSES, '1日2時間〜3時間']] as const).map(([cat, list, hint]) => (
               <div key={cat}>
                 <div className={`flex items-center gap-2 mt-2 mb-2 px-1`}>
                   <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${cat === '小学生' ? 'bg-emerald-500' : 'bg-indigo-500'}`}>{cat}コース</span>
+                  <span className="text-xs text-gray-400">{hint}</span>
                 </div>
                 <div className="space-y-2.5">
                   {list.map(c => {
@@ -244,7 +245,8 @@ export default function SummerApplyPage() {
                           </div>
                           <span className={`text-lg font-bold flex-shrink-0 ${cat === '小学生' ? 'text-emerald-600' : 'text-indigo-600'}`}>{c.hours}H</span>
                         </div>
-                        <div className="text-xs text-gray-400 mt-1 pl-8">例：{c.example}</div>
+                        <div className="text-sm text-gray-600 mt-1.5 pl-8">こんな人向け：{c.target}</div>
+                        <div className="text-xs text-gray-400 mt-0.5 pl-8">例：{c.example}</div>
                       </button>
                     )
                   })}
