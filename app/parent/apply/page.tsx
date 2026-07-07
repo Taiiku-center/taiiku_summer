@@ -5,7 +5,7 @@ import { createClient } from '../../lib/supabase'
 import {
   getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END,
   SLOT_CAPACITY, ELEMENTARY_COURSES, JUNIOR_COURSES,
-  type SummerStudent, type SummerCourse,
+  type SummerStudent, type SummerCourse, type SummerLesson,
 } from '../../lib'
 
 const NOTIFY_EMAIL = 'kusunoki.infinite@gmail.com'
@@ -41,6 +41,10 @@ export default function SummerApplyPage() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [slotCounts, setSlotCounts] = useState<Map<string, number>>(new Map())
   const [myExisting, setMyExisting] = useState<Set<string>>(new Set())
+  const [myLessons, setMyLessons] = useState<Map<string, SummerLesson>>(new Map())
+  const [cancelModal, setCancelModal] = useState<SummerLesson | null>(null)
+  const [cancelConfirm, setCancelConfirm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
   const [view, setView]     = useState<View>('week')
   const [current, setCurrent] = useState(() => {
     const t = toDateStr(new Date())
@@ -77,18 +81,20 @@ export default function SummerApplyPage() {
     try {
       const supabase = createClient()
       const { data } = await supabase.from('summer_lessons')
-        .select('student_id, date, start_time')
+        .select('*')
         .neq('status', 'cancelled')
         .gte('date', SUMMER_START).lte('date', SUMMER_END)
       const counts = new Map<string, number>()
       const mine = new Set<string>()
-      ;(data || []).forEach(r => {
+      const mineLessons = new Map<string, SummerLesson>()
+      ;(data || []).forEach((r: SummerLesson) => {
         const k = keyOf(r.date, r.start_time)
         counts.set(k, (counts.get(k) || 0) + 1)
-        if (r.student_id === s.id) mine.add(k)
+        if (r.student_id === s.id) { mine.add(k); mineLessons.set(k, r) }
       })
       setSlotCounts(counts)
       setMyExisting(mine)
+      setMyLessons(mineLessons)
     } catch {}
   }
 
@@ -122,13 +128,28 @@ export default function SummerApplyPage() {
   function key(d: Date, slot: string) { return keyOf(toDateStr(d), slot) }
 
   function toggleCell(d: Date, slot: string) {
-    if (unavailable(d, slot)) return
     const k = key(d, slot)
+    if (isBooked(d, slot)) {
+      const lesson = myLessons.get(k)
+      if (lesson) setCancelModal(lesson)
+      return
+    }
+    if (unavailable(d, slot)) return
     setSelected(prev => {
       const n = new Set(prev)
       if (n.has(k)) { n.delete(k); return n }
       n.add(k); return n
     })
+  }
+
+  async function cancelLesson(id: string) {
+    setCancelling(true)
+    const supabase = createClient()
+    await supabase.from('summer_lessons').delete().eq('id', id)
+    setCancelModal(null)
+    setCancelConfirm(false)
+    setCancelling(false)
+    if (student) await fetchData(student)
   }
   function paintCell(d: Date, slot: string) {
     const k = key(d, slot)
@@ -145,13 +166,19 @@ export default function SummerApplyPage() {
   }
 
   function onCellPointerDown(e: React.PointerEvent, d: Date, slot: string) {
-    if (unavailable(d, slot)) return
+    if (!isBooked(d, slot) && unavailable(d, slot)) return
     if (e.pointerType === 'mouse') {
       suppressNextClick.current = true
+      if (isBooked(d, slot)) {
+        const lesson = myLessons.get(key(d, slot))
+        if (lesson) setCancelModal(lesson)
+        return
+      }
       paintV.current = !selected.has(key(d, slot))
       dragActive.current = true
       paintCell(d, slot)
     } else {
+      if (isBooked(d, slot)) return   // タッチは通常クリックでモーダルを開く（ドラッグ対象外）
       longPressTimer.current = setTimeout(() => {
         longPressTimer.current = null
         if (navigator.vibrate) navigator.vibrate(50)
@@ -177,7 +204,7 @@ export default function SummerApplyPage() {
   function handleCellClick(d: Date, slot: string) {
     if (suppressNextClick.current) { suppressNextClick.current = false; return }
     if (suppressTouchClick.current) { suppressTouchClick.current = false; return }
-    if (unavailable(d, slot)) return
+    if (!isBooked(d, slot) && unavailable(d, slot)) return
     toggleCell(d, slot)
   }
 
@@ -397,7 +424,7 @@ export default function SummerApplyPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
                   <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-blue-400 rounded" />選択中</div>
-                  <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-sky-200 rounded" />選択済（申込み済み）</div>
+                  <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-sky-200 rounded" />選択済（タップでキャンセル）</div>
                   <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-gray-200 rounded" />満席・受講不可</div>
                 </div>
                 <div className="text-xs text-gray-400">タップで1コマ選択 ／ 長押ししながらドラッグで複数選択</div>
@@ -506,9 +533,9 @@ export default function SummerApplyPage() {
                     const booked = isBooked(current, slot)
                     const unavail = unavailable(current, slot)
                     return (
-                      <button key={slot} onClick={() => toggleCell(current, slot)} disabled={unavail && !sel}
+                      <button key={slot} onClick={() => toggleCell(current, slot)} disabled={!booked && unavail && !sel}
                         className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-colors active:opacity-70
-                          ${sel ? 'bg-blue-50' : booked ? 'bg-sky-50 cursor-not-allowed' : unavail ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                          ${sel ? 'bg-blue-50' : booked ? 'bg-sky-50 hover:bg-sky-100' : unavail ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
                         <span className="text-sm font-medium text-gray-500 w-14 flex-shrink-0">{slot}</span>
                         <div className={`flex-1 h-2.5 rounded-full ${sel ? 'bg-blue-400' : booked ? 'bg-sky-300' : unavail ? 'bg-gray-200' : 'bg-gray-100'}`} />
                         {sel && <span className="text-xs font-semibold text-blue-600 flex-shrink-0">選択中</span>}
@@ -571,6 +598,58 @@ export default function SummerApplyPage() {
           </div>
         </div>
       )}
+
+      {cancelModal && (() => {
+        const d = new Date(cancelModal.date + 'T12:00:00')
+        const dateStr = d.toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })
+        const timeStr = `${cancelModal.start_time}〜${cancelModal.end_time}`
+        return (
+          <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+              <div className="p-5 space-y-4">
+                <h2 className="text-base font-bold text-gray-800">選択済みの日時</h2>
+                <div className="bg-sky-50 rounded-xl p-4 space-y-1">
+                  <div className="text-sm font-semibold text-sky-700">{dateStr}</div>
+                  <div className="text-lg font-bold text-sky-800">{timeStr}</div>
+                  {cancelModal.course_name && <div className="text-xs text-sky-600 mt-1">{cancelModal.course_name}</div>}
+                </div>
+                {!cancelConfirm ? (
+                  <>
+                    <p className="text-sm text-gray-500">この授業をキャンセルできます。</p>
+                    <div className="space-y-2">
+                      <button onClick={() => setCancelConfirm(true)}
+                        className="w-full bg-red-50 text-red-600 border-2 border-red-200 py-3 rounded-xl text-sm font-bold active:bg-red-100">
+                        この授業をキャンセルする
+                      </button>
+                      <button onClick={() => { setCancelModal(null); setCancelConfirm(false) }}
+                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200">
+                        閉じる
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700 font-medium text-center">
+                      本当にキャンセルしますか？<br />
+                      <span className="text-xs font-normal text-red-500">この操作は取り消せません</span>
+                    </div>
+                    <div className="space-y-2">
+                      <button onClick={() => cancelLesson(cancelModal.id)} disabled={cancelling}
+                        className="w-full bg-red-500 text-white py-3 rounded-xl text-sm font-bold active:bg-red-600 disabled:opacity-50">
+                        {cancelling ? 'キャンセル中...' : 'はい、キャンセルします'}
+                      </button>
+                      <button onClick={() => setCancelConfirm(false)} disabled={cancelling}
+                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200 disabled:opacity-50">
+                        やめる
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
