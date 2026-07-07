@@ -115,6 +115,10 @@ export default function SummerApplyPage() {
     if (!selected.has(k) && (slotCounts.get(k) || 0) >= SLOT_CAPACITY) return true
     return false
   }
+  // 自分の既存予約（申込み済み）のマスかどうか
+  function isBooked(d: Date, slot: string) {
+    return myExisting.has(keyOf(toDateStr(d), slot))
+  }
   function key(d: Date, slot: string) { return keyOf(toDateStr(d), slot) }
 
   function toggleCell(d: Date, slot: string) {
@@ -393,6 +397,7 @@ export default function SummerApplyPage() {
               <div className="space-y-1.5">
                 <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
                   <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-blue-400 rounded" />選択中</div>
+                  <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-sky-200 rounded" />選択済（申込み済み）</div>
                   <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-gray-200 rounded" />満席・受講不可</div>
                 </div>
                 <div className="text-xs text-gray-400">タップで1コマ選択 ／ 長押ししながらドラッグで複数選択</div>
@@ -427,6 +432,7 @@ export default function SummerApplyPage() {
                             const sel = selected.has(key(d, slot))
                             const inS = isInSummer(d)
                             const blocked = isBlocked(d, slot)
+                            const booked = isBooked(d, slot)
                             const unavail = unavailable(d, slot)
                             return (
                               <div key={di}
@@ -437,6 +443,7 @@ export default function SummerApplyPage() {
                                 onClick={() => handleCellClick(d, slot)}
                                 className={`border-b border-r border-gray-200 h-10 transition-colors
                                   ${sel ? 'bg-blue-400 cursor-pointer' :
+                                    booked ? 'bg-sky-200 cursor-not-allowed' :
                                     !inS || blocked ? 'bg-gray-50 cursor-not-allowed' :
                                     unavail ? 'bg-gray-200 cursor-not-allowed' :
                                     'hover:bg-blue-50 active:bg-blue-100 cursor-pointer'}`}
@@ -496,15 +503,17 @@ export default function SummerApplyPage() {
                 <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
                   {slots.map(slot => {
                     const sel = selected.has(key(current, slot))
+                    const booked = isBooked(current, slot)
                     const unavail = unavailable(current, slot)
                     return (
                       <button key={slot} onClick={() => toggleCell(current, slot)} disabled={unavail && !sel}
                         className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-colors active:opacity-70
-                          ${sel ? 'bg-blue-50' : unavail ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
+                          ${sel ? 'bg-blue-50' : booked ? 'bg-sky-50 cursor-not-allowed' : unavail ? 'bg-gray-50 cursor-not-allowed' : 'hover:bg-gray-50'}`}>
                         <span className="text-sm font-medium text-gray-500 w-14 flex-shrink-0">{slot}</span>
-                        <div className={`flex-1 h-2.5 rounded-full ${sel ? 'bg-blue-400' : unavail ? 'bg-gray-200' : 'bg-gray-100'}`} />
+                        <div className={`flex-1 h-2.5 rounded-full ${sel ? 'bg-blue-400' : booked ? 'bg-sky-300' : unavail ? 'bg-gray-200' : 'bg-gray-100'}`} />
                         {sel && <span className="text-xs font-semibold text-blue-600 flex-shrink-0">選択中</span>}
-                        {!sel && unavail && <span className="text-xs font-semibold text-gray-400 flex-shrink-0">満席・不可</span>}
+                        {!sel && booked && <span className="text-xs font-semibold text-sky-500 flex-shrink-0">選択済</span>}
+                        {!sel && !booked && unavail && <span className="text-xs font-semibold text-gray-400 flex-shrink-0">満席・不可</span>}
                       </button>
                     )
                   })}
