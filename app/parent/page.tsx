@@ -44,13 +44,13 @@ export default function SummerParentPage() {
 
         {/* コース申込み導線 */}
         <button onClick={() => router.push('/parent/apply')}
-          className="w-full mb-6 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-2xl shadow-lg shadow-blue-200 px-6 py-5 flex items-center gap-4 active:scale-[0.98] hover:shadow-xl transition-all text-left">
-          <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">🎒</div>
+          className="w-full mb-6 bg-white border-2 border-blue-200 rounded-2xl shadow-sm px-6 py-5 flex items-center gap-4 active:scale-[0.98] hover:shadow-md transition-all text-left">
+          <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">🎒</div>
           <div className="flex-1 min-w-0">
-            <div className="text-lg font-bold">夏期講習の授業を申込む</div>
-            <div className="text-sm text-blue-50 mt-0.5">コースを選んで日程を申込みます</div>
+            <div className="text-lg font-bold text-gray-800">夏期講習の授業を申込む</div>
+            <div className="text-sm text-gray-400 mt-0.5">コースを選んで日程を申込みます</div>
           </div>
-          <span className="text-white/80 text-2xl flex-shrink-0">›</span>
+          <span className="text-gray-300 text-2xl flex-shrink-0">›</span>
         </button>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

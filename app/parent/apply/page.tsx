@@ -234,15 +234,19 @@ export default function SummerApplyPage() {
                       <button key={c.id} onClick={() => selectCourse(cat, c)}
                         className={`w-full text-left bg-white rounded-2xl border-2 px-4 py-4 transition-all active:scale-[0.99]
                           ${sel ? (cat === '小学生' ? 'border-emerald-500 ring-2 ring-emerald-100' : 'border-indigo-500 ring-2 ring-indigo-100') : 'border-gray-100 hover:border-gray-200'}`}>
-                        <div className="flex items-center gap-2 min-w-0">
-                          <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center
-                            ${sel ? (cat === '小学生' ? 'border-emerald-500 bg-emerald-500' : 'border-indigo-500 bg-indigo-500') : 'border-gray-300'}`}>
-                            {sel && <span className="text-white text-xs font-bold">✓</span>}
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className={`w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center
+                              ${sel ? (cat === '小学生' ? 'border-emerald-500 bg-emerald-500' : 'border-indigo-500 bg-indigo-500') : 'border-gray-300'}`}>
+                              {sel && <span className="text-white text-xs font-bold">✓</span>}
+                            </div>
+                            <span className="font-bold text-gray-800 truncate">{c.name}</span>
+                            {c.popular && <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full flex-shrink-0">人気</span>}
                           </div>
-                          <span className="font-bold text-gray-800 truncate">{c.name}</span>
-                          {c.popular && <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full flex-shrink-0">人気</span>}
+                          <span className={`text-lg font-bold flex-shrink-0 ${cat === '小学生' ? 'text-emerald-600' : 'text-indigo-600'}`}>{c.hours}H</span>
                         </div>
                         <div className="text-sm text-gray-600 mt-1.5 pl-8">こんな人向け：{c.target}</div>
+                        <div className="text-xs text-gray-400 mt-0.5 pl-8">受講時間：{c.hours}H（例：{c.example}）</div>
                       </button>
                     )
                   })}
