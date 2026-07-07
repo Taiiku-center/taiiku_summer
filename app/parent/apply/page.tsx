@@ -95,7 +95,7 @@ export default function SummerApplyPage() {
   const requiredHours = course?.hours ?? 0
   const requiredSlots = requiredHours * 2
   const selectedHours = selected.size * 0.5
-  const canProceed = course != null && selected.size === requiredSlots
+  const canProceed = course != null && selected.size >= requiredSlots
 
   function selectCourse(cat: '小学生' | '中学生', c: SummerCourse) {
     setCategory(cat); setCourse(c); setSelected(new Set())
@@ -123,7 +123,6 @@ export default function SummerApplyPage() {
     setSelected(prev => {
       const n = new Set(prev)
       if (n.has(k)) { n.delete(k); return n }
-      if (n.size >= requiredSlots) return n
       n.add(k); return n
     })
   }
@@ -132,7 +131,7 @@ export default function SummerApplyPage() {
     setSelected(prev => {
       const n = new Set(prev)
       if (paintV.current) {
-        if (unavailable(d, slot) || n.has(k) || n.size >= requiredSlots) return n
+        if (unavailable(d, slot) || n.has(k)) return n
         n.add(k)
       } else {
         n.delete(k)
@@ -355,15 +354,17 @@ export default function SummerApplyPage() {
               <div className="mt-3">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-sm text-gray-500">選択済み</span>
-                  <span className={`text-base font-bold ${selectedHours === requiredHours ? 'text-green-600' : 'text-blue-600'}`}>{selectedHours}H／{requiredHours}H</span>
+                  <span className={`text-base font-bold ${selectedHours >= requiredHours ? 'text-green-600' : 'text-blue-600'}`}>{selectedHours}H／{requiredHours}H</span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                  <div className={`h-full rounded-full transition-all ${selectedHours === requiredHours ? 'bg-green-500' : 'bg-blue-500'}`}
+                  <div className={`h-full rounded-full transition-all ${selectedHours >= requiredHours ? 'bg-green-500' : 'bg-blue-500'}`}
                     style={{ width: `${Math.min(100, (selectedHours / requiredHours) * 100)}%` }} />
                 </div>
                 {selectedHours < requiredHours
                   ? <div className="text-xs text-gray-400 mt-1.5">あと {requiredHours - selectedHours}H 選んでください</div>
-                  : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>}
+                  : selectedHours === requiredHours
+                    ? <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>
+                    : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数を {selectedHours - requiredHours}H 超えています（このまま進めます）。</div>}
               </div>
             </div>
 
