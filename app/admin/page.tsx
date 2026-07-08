@@ -303,10 +303,95 @@ export default function SummerAdminPage() {
     openPrintWindow(`${stu.name} 授業カレンダー`, pages, '#111827', '#e6e6e6')
   }
 
+  // 全生徒分をまとめた1つのカレンダー（各日付マスに「時間 生徒名」を列挙）
+  function buildCombinedPagesHtml(): string {
+    const byDate: Record<string, LessonRow[]> = {}
+    lessons.forEach(l => { (byDate[l.date] = byDate[l.date] || []).push(l) })
+    const absOf = (date: string, time: string, studentId: string) =>
+      absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
+    const dowH = ['月', '火', '水', '木', '金', '土', '日']
+
+    // その日の予約を生徒ごとに連続コマ結合し、「時間 氏名」の行リストを返す
+    function dayLines(ds: string): string {
+      const dayItems = byDate[ds] || []
+      if (dayItems.length === 0) return ''
+      const byStudent = new Map<string, LessonRow[]>()
+      dayItems.forEach(l => {
+        const arr = byStudent.get(l.student_id) || []
+        arr.push(l)
+        byStudent.set(l.student_id, arr)
+      })
+      type Seg = { start: string; end: string; name: string; absType?: string }
+      const allSegs: Seg[] = []
+      byStudent.forEach((list, studentId) => {
+        const sorted = list.slice().sort((a, b) => a.start_time < b.start_time ? -1 : 1)
+        const segs: Seg[] = []
+        sorted.forEach(l => {
+          const ab = absOf(ds, l.start_time, studentId)
+          if (ab) { segs.push({ start: l.start_time, end: l.end_time, name: l.full_name, absType: ab.type }); return }
+          const lastSeg = segs[segs.length - 1]
+          if (lastSeg && !lastSeg.absType && lastSeg.end === l.start_time) {
+            lastSeg.end = l.end_time
+          } else {
+            segs.push({ start: l.start_time, end: l.end_time, name: l.full_name })
+          }
+        })
+        allSegs.push(...segs)
+      })
+      allSegs.sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : a.name < b.name ? -1 : 1)
+      return allSegs.map(s =>
+        `<div class="ev ${s.absType ? 'abs' : ''}">${s.start}〜${s.end} ${esc(s.name)}${s.absType ? `<span class="tag">${esc(s.absType)}</span>` : ''}</div>`
+      ).join('')
+    }
+
+    function monthGridAll(y: number, m: number) {
+      const first = new Date(y, m, 1)
+      const last = new Date(y, m + 1, 0)
+      const startDow = (first.getDay() + 6) % 7
+      const cells: string[] = []
+      for (let i = 0; i < startDow; i++) cells.push('<td class="empty"></td>')
+      for (let d = 1; d <= last.getDate(); d++) {
+        const dateObj = new Date(y, m, d)
+        const ds = toDateStr(dateObj)
+        const dow = dateObj.getDay()
+        const dayItems = byDate[ds] || []
+        const inP = ds >= SUMMER_START && ds <= SUMMER_END
+        let inner = `<div class="dnum ${dow === 0 ? 'sun' : dow === 6 ? 'sat' : ''}">${d}</div>`
+        inner += dayLines(ds)
+        cells.push(`<td class="${dayItems.length ? 'has' : ''} ${!inP ? 'out' : ''}">${inner}</td>`)
+      }
+      while (cells.length % 7 !== 0) cells.push('<td class="empty"></td>')
+      let rows = ''
+      for (let i = 0; i < cells.length; i += 7) rows += `<tr>${cells.slice(i, i + 7).join('')}</tr>`
+      const head = `<tr>${dowH.map((h, i) => `<th class="${i === 6 ? 'sun' : i === 5 ? 'sat' : ''}">${h}</th>`).join('')}</tr>`
+      return `<table class="cal"><thead>${head}</thead><tbody>${rows}</tbody></table>`
+    }
+
+    const monthsSet = new Set<string>()
+    const cur = new Date(SUMMER_START + 'T00:00:00')
+    const end = new Date(SUMMER_END + 'T00:00:00')
+    while (cur <= end) { monthsSet.add(`${cur.getFullYear()}-${cur.getMonth()}`); cur.setDate(cur.getDate() + 1) }
+    const monthList = Array.from(monthsSet).map(k => k.split('-').map(Number) as [number, number])
+    const hasAbs = absences.length > 0
+
+    return monthList.map(([y, m], idx) => {
+      const cnt = lessons.filter(l => { const d = new Date(l.date + 'T00:00:00'); return d.getFullYear() === y && d.getMonth() === m }).length
+      return `<section class="page">
+        <div class="head">
+          <div><div class="name">夏期講習カレンダー</div><div class="sub">${SUMMER_START}〜${SUMMER_END}</div></div>
+        </div>
+        <div class="mtitle">${y}年${m + 1}月<span class="mcount">この月の授業：${cnt}コマ</span></div>
+        <div class="legend"><span class="box"></span>授業のある日　<span class="boxg"></span>授業のない日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
+        ${monthGridAll(y, m)}
+        <div class="foot">大育進学センター 夏期講習${monthList.length > 1 ? `　（${idx + 1}/${monthList.length}ページ）` : ''}</div>
+      </section>`
+    }).join('')
+  }
+
   function printAllStudentCalendars() {
     if (students.length === 0) { alert('予約のある生徒がいません。'); return }
-    const allPages = students.map(s => buildStudentPagesHtml(s.id)).join('')
-    openPrintWindow('生徒全員 授業カレンダー', allPages, '#111827', '#e6e6e6')
+    const combined = buildCombinedPagesHtml()
+    openPrintWindow('夏期講習カレンダー', combined, '#111827', '#e6e6e6')
   }
 
   function DayDetail({ date }: { date: string }) {
@@ -429,7 +514,7 @@ export default function SummerAdminPage() {
         <button onClick={printAllStudentCalendars}
           disabled={students.length === 0}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 disabled:opacity-40 transition-colors">
-          🖨 生徒全員分を印刷 / PDF
+          🖨 夏期講習カレンダー（全員分）
         </button>
       </div>
 
