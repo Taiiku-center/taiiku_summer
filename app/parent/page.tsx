@@ -42,6 +42,10 @@ export default function SummerParentPage() {
           <p className="text-sm text-gray-400 mt-1">7月20日（月）〜 8月29日（土）</p>
         </div>
 
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl px-4 py-3 mb-4 text-sm text-blue-700 leading-relaxed">
+          はじめての方はまず下の「夏期講習の授業を申込む」から、コース選びと日程の申込みができます。それ以外のメニューは、申込み後の確認・変更に使います。
+        </div>
+
         {/* コース申込み導線 */}
         <button onClick={() => router.push('/parent/apply')}
           className="w-full mb-6 bg-white border-2 border-blue-200 rounded-2xl shadow-sm px-6 py-5 flex items-center gap-4 active:scale-[0.98] hover:shadow-md transition-all text-left">
