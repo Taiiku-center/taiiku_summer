@@ -248,10 +248,10 @@ export default function SummerAdminPage() {
 
   const PRINT_STYLE = (primary: string, light: string, pageSize: string = 'A4', pageOrientation: 'portrait' | 'landscape' = 'portrait') => `
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#111827; margin:0; padding:24px; }
-  .head { display:flex; align-items:center; justify-content:space-between; border-bottom:4px solid ${primary}; padding-bottom:12px; margin-bottom:14px; }
-  .name { font-size:26px; font-weight:800; }
-  .sub { font-size:13px; color:#374151; margin-top:4px; }
+  body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#111827; margin:0; padding:10px; }
+  .head { display:flex; align-items:center; justify-content:space-between; border-bottom:3px solid ${primary}; padding-bottom:6px; margin-bottom:8px; }
+  .name { font-size:22px; font-weight:800; }
+  .sub { font-size:11px; color:#374151; margin-top:2px; }
   .badge { border:2px solid ${primary}; color:${primary}; font-weight:800; font-size:14px; padding:6px 14px; border-radius:8px; }
   .mtitle { font-size:22px; font-weight:800; margin-bottom:8px; display:flex; align-items:baseline; justify-content:space-between; }
   .mcount { font-size:13px; font-weight:600; color:#374151; }
@@ -272,23 +272,23 @@ export default function SummerAdminPage() {
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
 
   table.wcal { border-collapse:collapse; width:100%; table-layout:fixed; font-size:11px; }
-  table.wcal th { font-size:12px; font-weight:700; color:#111827; padding:5px 2px; border:1px solid #111827; background:#ffffff; }
+  table.wcal th { font-size:11px; font-weight:700; color:#111827; padding:3px 2px; border:1px solid #111827; background:#ffffff; }
   table.wcal th.sat { color:#111827; }
   table.wcal th.out { color:#9ca3af; }
   table.wcal th .wd { font-weight:400; color:#374151; }
-  table.wcal td { border:1px solid #9ca3af; padding:2px 3px; vertical-align:top; height:35px; }
-  table.wcal td.tcol, table.wcal th.tcol { width:58px; font-size:11px; font-weight:700; text-align:right; padding-right:6px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
+  table.wcal td { border:1px solid #9ca3af; padding:1px 3px; vertical-align:top; height:31px; }
+  table.wcal td.tcol, table.wcal th.tcol { width:62px; font-size:11px; font-weight:700; text-align:right; padding-right:7px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
   table.wcal td.has { background:#f3f4f6; }
   table.wcal td.out { background:#fafafa; }
-  .wpeople { display:grid; gap:2px 5px; align-items:start; }
+  .wpeople { display:grid; gap:1px 5px; align-items:start; }
   .wpeople.many { grid-template-columns:repeat(2, minmax(0, 1fr)); }
-  .wev { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:700; color:#111827; line-height:1.08; }
-  .foot { margin-top:12px; font-size:10px; color:#6b7280; text-align:center; }
+  .wev { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:9.5px; font-weight:700; color:#111827; line-height:1; }
+  .foot { margin-top:6px; font-size:9px; color:#6b7280; text-align:center; }
   .wgroup { margin-bottom:0; }
   .wgroup:last-child { margin-bottom:0; }
-  .wgroup .wtitle { font-size:15px; font-weight:800; margin-bottom:6px; }
+  .wgroup .wtitle { font-size:13px; font-weight:800; margin-bottom:3px; }
 
-  @page { size:${pageSize} ${pageOrientation}; margin:10mm; }
+  @page { size:${pageSize} ${pageOrientation}; margin:6mm; }
   @media print { .noprint { display:none; } }
 `
 
