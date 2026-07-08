@@ -184,7 +184,6 @@ export default function SummerAdminPage() {
     const mine = lessons.filter(l => l.student_id === studentId)
     const byDate: Record<string, LessonRow[]> = {}
     mine.forEach(l => { (byDate[l.date] = byDate[l.date] || []).push(l) })
-    const absOf = (date: string, time: string) => absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
     const dowH = ['月', '火', '水', '木', '金', '土', '日']
 
     function monthGrid(y: number, m: number) {
@@ -200,21 +199,19 @@ export default function SummerAdminPage() {
         const items = (byDate[ds] || []).slice().sort((a, b) => a.start_time < b.start_time ? -1 : 1)
         const inP = ds >= SUMMER_START && ds <= SUMMER_END
         let inner = `<div class="dnum ${dow === 0 ? 'sun' : dow === 6 ? 'sat' : ''}">${d}</div>`
-        // 連続する30分コマを1つの時間帯にまとめる（欠席・遅刻がある枠はまとめない）
-        type Seg = { start: string; end: string; absType?: string }
+        // 連続する30分コマを1つの時間帯にまとめる（欠席・遅刻は印刷に表示しない）
+        type Seg = { start: string; end: string }
         const segs: Seg[] = []
         items.forEach(l => {
-          const ab = absOf(ds, l.start_time)
-          if (ab) { segs.push({ start: l.start_time, end: l.end_time, absType: ab.type }); return }
           const lastSeg = segs[segs.length - 1]
-          if (lastSeg && !lastSeg.absType && lastSeg.end === l.start_time) {
+          if (lastSeg && lastSeg.end === l.start_time) {
             lastSeg.end = l.end_time
           } else {
             segs.push({ start: l.start_time, end: l.end_time })
           }
         })
         segs.forEach(seg => {
-          inner += `<div class="ev ${seg.absType ? 'abs' : ''}">${seg.start}〜${seg.end}${seg.absType ? `<span class="tag">${esc(seg.absType)}</span>` : ''}</div>`
+          inner += `<div class="ev">${seg.start}〜${seg.end}</div>`
         })
         cells.push(`<td class="${items.length ? 'has' : ''} ${!inP ? 'out' : ''}">${inner}</td>`)
       }
@@ -232,8 +229,6 @@ export default function SummerAdminPage() {
     while (cur <= end) { monthsSet.add(`${cur.getFullYear()}-${cur.getMonth()}`); cur.setDate(cur.getDate() + 1) }
     const monthList = Array.from(monthsSet).map(k => k.split('-').map(Number) as [number, number])
 
-    const hasAbs = mine.some(l => absOf(l.date, l.start_time))
-
     // 1か月＝1ページ（7月・8月を分けて両面印刷できるように）
     const pages = monthList.map(([y, m], idx) => {
       const cnt = mine.filter(l => { const d = new Date(l.date + 'T00:00:00'); return d.getFullYear() === y && d.getMonth() === m }).length
@@ -242,7 +237,7 @@ export default function SummerAdminPage() {
           <div><div class="name">${esc(stu.name)} さん</div><div class="sub">夏期講習 授業カレンダー ／ ${SUMMER_START}〜${SUMMER_END}</div></div>
         </div>
         <div class="mtitle">${y}年${m + 1}月<span class="mcount">この月の授業：${cnt}コマ</span></div>
-        <div class="legend"><span class="box"></span>授業のある日　<span class="boxg"></span>授業のない日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
+        <div class="legend"><span class="box"></span>授業のある日　<span class="boxg"></span>授業のない日</div>
         ${monthGrid(y, m)}
         <div class="foot">大育進学センター 夏期講習${monthList.length > 1 ? `　（${idx + 1}/${monthList.length}ページ）` : ''}</div>
       </section>`
