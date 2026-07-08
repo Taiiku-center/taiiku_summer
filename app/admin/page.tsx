@@ -271,22 +271,22 @@ export default function SummerAdminPage() {
   td.has .dnum { font-weight:800; }
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
 
-  table.wcal { border-collapse:collapse; width:100%; table-layout:fixed; font-size:9px; }
-  table.wcal th { font-size:10px; font-weight:700; color:#111827; padding:3px 2px; border:1px solid #111827; background:#ffffff; }
+  table.wcal { border-collapse:collapse; width:100%; table-layout:fixed; font-size:11px; }
+  table.wcal th { font-size:12px; font-weight:700; color:#111827; padding:5px 2px; border:1px solid #111827; background:#ffffff; }
   table.wcal th.sat { color:#111827; }
   table.wcal th.out { color:#9ca3af; }
   table.wcal th .wd { font-weight:400; color:#374151; }
-  table.wcal td { border:1px solid #9ca3af; padding:1px 2px; vertical-align:top; height:17px; }
-  table.wcal td.tcol, table.wcal th.tcol { width:42px; font-size:9px; font-weight:700; text-align:right; padding-right:4px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
+  table.wcal td { border:1px solid #9ca3af; padding:2px 3px; vertical-align:top; height:35px; }
+  table.wcal td.tcol, table.wcal th.tcol { width:58px; font-size:11px; font-weight:700; text-align:right; padding-right:6px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
   table.wcal td.has { background:#f3f4f6; }
   table.wcal td.out { background:#fafafa; }
-  .wpeople { display:grid; gap:1px 3px; align-items:start; }
+  .wpeople { display:grid; gap:2px 5px; align-items:start; }
   .wpeople.many { grid-template-columns:repeat(2, minmax(0, 1fr)); }
-  .wev { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:7.5px; font-weight:700; color:#111827; line-height:1.1; }
-  .foot { margin-top:10px; font-size:10px; color:#6b7280; text-align:center; }
-  .wgroup { margin-bottom:8px; }
+  .wev { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:10px; font-weight:700; color:#111827; line-height:1.08; }
+  .foot { margin-top:12px; font-size:10px; color:#6b7280; text-align:center; }
+  .wgroup { margin-bottom:0; }
   .wgroup:last-child { margin-bottom:0; }
-  .wgroup .wtitle { font-size:12px; font-weight:800; margin-bottom:2px; }
+  .wgroup .wtitle { font-size:15px; font-weight:800; margin-bottom:6px; }
 
   @page { size:${pageSize} ${pageOrientation}; margin:10mm; }
   @media print { .noprint { display:none; } }
@@ -311,7 +311,7 @@ export default function SummerAdminPage() {
     const stu = students.find(s => s.id === studentId)
     if (!stu) return
     const pages = buildStudentPagesHtml(studentId)
-    openPrintWindow(`${stu.name} 授業カレンダー`, pages, '#111827', '#e6e6e6', 'A4', 'landscape')
+    openPrintWindow(`${stu.name} 授業カレンダー`, pages, '#111827', '#e6e6e6', 'B4', 'landscape')
   }
 
   // 全生徒分をまとめた1つのカレンダー（各日付マスに「時間 生徒名」を列挙）
@@ -357,9 +357,9 @@ export default function SummerAdminPage() {
     const end = new Date(SUMMER_END + 'T00:00:00')
     while (cur <= end) { weeks.push(new Date(cur)); cur = new Date(cur); cur.setDate(cur.getDate() + 7) }
 
-    // 2週間ずつ1ページにまとめる
+    // 1週間ずつ1ページにまとめる
     const pageGroups: Date[][] = []
-    for (let i = 0; i < weeks.length; i += 2) pageGroups.push(weeks.slice(i, i + 2))
+    for (let i = 0; i < weeks.length; i += 1) pageGroups.push(weeks.slice(i, i + 1))
 
     return pageGroups.map((group, idx) => {
       const groupsHtml = group.map(weekStart => {
