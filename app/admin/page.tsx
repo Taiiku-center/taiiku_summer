@@ -200,9 +200,21 @@ export default function SummerAdminPage() {
         const items = (byDate[ds] || []).slice().sort((a, b) => a.start_time < b.start_time ? -1 : 1)
         const inP = ds >= SUMMER_START && ds <= SUMMER_END
         let inner = `<div class="dnum ${dow === 0 ? 'sun' : dow === 6 ? 'sat' : ''}">${d}</div>`
+        // 連続する30分コマを1つの時間帯にまとめる（欠席・遅刻がある枠はまとめない）
+        type Seg = { start: string; end: string; absType?: string }
+        const segs: Seg[] = []
         items.forEach(l => {
           const ab = absOf(ds, l.start_time)
-          inner += `<div class="ev ${ab ? 'abs' : ''}">${l.start_time}〜${l.end_time}${ab ? `<span class="tag">${esc(ab.type)}</span>` : ''}</div>`
+          if (ab) { segs.push({ start: l.start_time, end: l.end_time, absType: ab.type }); return }
+          const lastSeg = segs[segs.length - 1]
+          if (lastSeg && !lastSeg.absType && lastSeg.end === l.start_time) {
+            lastSeg.end = l.end_time
+          } else {
+            segs.push({ start: l.start_time, end: l.end_time })
+          }
+        })
+        segs.forEach(seg => {
+          inner += `<div class="ev ${seg.absType ? 'abs' : ''}">${seg.start}〜${seg.end}${seg.absType ? `<span class="tag">${esc(seg.absType)}</span>` : ''}</div>`
         })
         cells.push(`<td class="${items.length ? 'has' : ''} ${!inP ? 'out' : ''}">${inner}</td>`)
       }
