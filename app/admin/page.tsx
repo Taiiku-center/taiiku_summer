@@ -281,8 +281,6 @@ export default function SummerAdminPage() {
   table.wcal td.has { background:#f3f4f6; }
   table.wcal td.out { background:#fafafa; }
   .wev { font-weight:700; color:#111827; line-height:1.3; }
-  .wev.abs { text-decoration:line-through; font-weight:600; color:#4b5563; }
-  .wev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; border-radius:3px; padding:0 3px; margin-left:2px; font-size:8px; font-weight:700; }
   .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
   @page { size:A4 portrait; margin:12mm; }
   @media print { .noprint { display:none; } }
@@ -320,17 +318,12 @@ export default function SummerAdminPage() {
       arr.push(l)
       byDateSlot.set(k, arr)
     })
-    const absOf = (date: string, time: string, studentId: string) =>
-      absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
     const dowH = ['月', '火', '水', '木', '金', '土']
 
     function cellContent(ds: string, slot: string): string {
       const items = (byDateSlot.get(`${ds}__${slot}`) || []).slice().sort((a, b) => a.full_name < b.full_name ? -1 : 1)
       if (items.length === 0) return ''
-      return items.map(l => {
-        const ab = absOf(ds, slot, l.student_id)
-        return `<div class="wev ${ab ? 'abs' : ''}">${esc(l.full_name)}${ab ? `<span class="tag">${esc(ab.type)}</span>` : ''}</div>`
-      }).join('')
+      return items.map(l => `<div class="wev">${esc(l.full_name)}</div>`).join('')
     }
 
     function weekGrid(weekStart: Date) {
