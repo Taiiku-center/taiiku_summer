@@ -246,7 +246,7 @@ export default function SummerAdminPage() {
     return pages
   }
 
-  const PRINT_STYLE = (primary: string, light: string) => `
+  const PRINT_STYLE = (primary: string, light: string, pageSize: string = 'A4') => `
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#111827; margin:0; padding:24px; }
   .head { display:flex; align-items:center; justify-content:space-between; border-bottom:4px solid ${primary}; padding-bottom:12px; margin-bottom:14px; }
@@ -276,19 +276,22 @@ export default function SummerAdminPage() {
   table.wcal th.sat { color:#111827; }
   table.wcal th.out { color:#9ca3af; }
   table.wcal th .wd { font-weight:400; color:#374151; }
-  table.wcal td { border:1px solid #9ca3af; padding:2px 3px; vertical-align:top; height:24px; }
+  table.wcal td { border:1px solid #9ca3af; padding:1px 3px; vertical-align:top; height:17px; }
   table.wcal td.tcol, table.wcal th.tcol { width:44px; font-size:10px; font-weight:700; text-align:right; padding-right:5px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
   table.wcal td.has { background:#f3f4f6; }
   table.wcal td.out { background:#fafafa; }
   .wev { font-weight:700; color:#111827; line-height:1.3; }
   .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
-  @page { size:A4 portrait; margin:12mm; }
+  .wgroup { margin-bottom:16px; }
+  .wgroup:last-child { margin-bottom:0; }
+  .wgroup .wtitle { font-size:14px; font-weight:800; margin-bottom:4px; }
+  @page { size:${pageSize} portrait; margin:10mm; }
   @media print { .noprint { display:none; } }
 `
 
-  function openPrintWindow(title: string, bodyHtml: string, primary: string, light: string) {
+  function openPrintWindow(title: string, bodyHtml: string, primary: string, light: string, pageSize: string = 'A4') {
     const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(title)}</title>
-<style>${PRINT_STYLE(primary, light)}</style></head><body>
+<style>${PRINT_STYLE(primary, light, pageSize)}</style></head><body>
   ${bodyHtml}
   <button class="noprint" onclick="window.print()" style="position:fixed;top:12px;right:12px;padding:8px 16px;font-size:14px;background:${primary};color:#fff;border:none;border-radius:8px;cursor:pointer;">印刷 / PDF保存</button>
 </body></html>`
@@ -351,15 +354,24 @@ export default function SummerAdminPage() {
     const end = new Date(SUMMER_END + 'T00:00:00')
     while (cur <= end) { weeks.push(new Date(cur)); cur = new Date(cur); cur.setDate(cur.getDate() + 7) }
 
-    return weeks.map((weekStart, idx) => {
-      const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 5)
+    // 2週間ずつ1ページにまとめる
+    const pageGroups: Date[][] = []
+    for (let i = 0; i < weeks.length; i += 2) pageGroups.push(weeks.slice(i, i + 2))
+
+    return pageGroups.map((group, idx) => {
+      const groupsHtml = group.map(weekStart => {
+        const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 5)
+        return `<div class="wgroup">
+          <div class="wtitle">${weekStart.getMonth() + 1}/${weekStart.getDate()} 〜 ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}</div>
+          ${weekGrid(weekStart)}
+        </div>`
+      }).join('')
       return `<section class="page">
         <div class="head">
           <div><div class="name">夏期講習カレンダー</div><div class="sub">${SUMMER_START}〜${SUMMER_END}</div></div>
         </div>
-        <div class="mtitle">${weekStart.getMonth() + 1}/${weekStart.getDate()} 〜 ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}</div>
-        ${weekGrid(weekStart)}
-        <div class="foot">大育進学センター 夏期講習　（${idx + 1}/${weeks.length}ページ）</div>
+        ${groupsHtml}
+        <div class="foot">大育進学センター 夏期講習　（${idx + 1}/${pageGroups.length}ページ）</div>
       </section>`
     }).join('')
   }
@@ -367,7 +379,7 @@ export default function SummerAdminPage() {
   function printAllStudentCalendars() {
     if (students.length === 0) { alert('予約のある生徒がいません。'); return }
     const combined = buildCombinedWeekPagesHtml()
-    openPrintWindow('夏期講習カレンダー', combined, '#111827', '#e6e6e6')
+    openPrintWindow('夏期講習カレンダー', combined, '#111827', '#e6e6e6', 'B4')
   }
 
   function DayDetail({ date }: { date: string }) {
