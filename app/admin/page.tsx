@@ -31,6 +31,26 @@ const STUDENT_PALETTE = [
   { bg: 'bg-rose-100',    text: 'text-rose-800',    bar: 'bg-rose-400',    dot: 'bg-rose-500' },
 ]
 
+// 印刷用（生徒ごとの色分け）: STUDENT_PALETTE と対応する実HEXカラー
+const PRINT_PALETTE = [
+  { bg: '#fee2e2', text: '#991b1b' }, // red
+  { bg: '#ffedd5', text: '#9a3412' }, // orange
+  { bg: '#fef3c7', text: '#92400e' }, // amber
+  { bg: '#ecfccb', text: '#3f6212' }, // lime
+  { bg: '#dcfce7', text: '#166534' }, // green
+  { bg: '#d1fae5', text: '#065f46' }, // emerald
+  { bg: '#ccfbf1', text: '#115e59' }, // teal
+  { bg: '#cffafe', text: '#155e75' }, // cyan
+  { bg: '#e0f2fe', text: '#075985' }, // sky
+  { bg: '#dbeafe', text: '#1e40af' }, // blue
+  { bg: '#e0e7ff', text: '#3730a3' }, // indigo
+  { bg: '#ede9fe', text: '#5b21b6' }, // violet
+  { bg: '#f3e8ff', text: '#6b21a8' }, // purple
+  { bg: '#fae8ff', text: '#86198f' }, // fuchsia
+  { bg: '#fce7f3', text: '#9d174d' }, // pink
+  { bg: '#ffe4e6', text: '#9f1239' }, // rose
+]
+
 function clampToSummer(d: Date): Date {
   const ds = toDateStr(d)
   if (ds < SUMMER_START) return new Date(SUMMER_START + 'T00:00:00')
@@ -267,7 +287,7 @@ export default function SummerAdminPage() {
   .page:last-child { page-break-after: auto; }
   table.cal { border-collapse:collapse; width:100%; table-layout:fixed; }
   table.cal th { font-size:13px; font-weight:700; color:#111827; padding:6px 0; border-bottom:2px solid #111827; }
-  table.cal td { width:14.28%; height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; background:${light}; }
+  table.cal td { width:14.28%; height:118px; min-height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; background:${light}; overflow:hidden; }
   table.cal td.empty { background:#ffffff; border:1px solid #e5e7eb; }
   table.cal td.out { background:${light}; }
   table.cal td.has { background:#ffffff; border:2.5px solid #111827; }
@@ -276,6 +296,11 @@ export default function SummerAdminPage() {
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
   .ev.abs { text-decoration:line-through; font-weight:700; }
   .ev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; background:#ffffff; color:#111827; border-radius:3px; padding:0 4px; margin-left:2px; font-size:11px; font-weight:700; }
+  .ev-chip { display:flex; align-items:center; gap:5px; flex-wrap:wrap; border-radius:5px; padding:2px 6px; margin-top:3px; line-height:1.3; }
+  .ev-chip.abs { background:#ffffff; border:1px solid #9ca3af; text-decoration:line-through; }
+  .ev-chip .ev-time { font-size:11px; font-weight:800; white-space:nowrap; }
+  .ev-chip .ev-name { font-size:11px; font-weight:700; }
+  .ev-chip .tag { text-decoration:none; border:1px solid currentColor; background:#ffffff; color:inherit; border-radius:3px; padding:0 4px; font-size:10px; font-weight:700; }
   .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
   @page { size:A4 portrait; margin:12mm; }
   @media print { .noprint { display:none; } }
@@ -311,6 +336,11 @@ export default function SummerAdminPage() {
       absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
     const dowH = ['月', '火', '水', '木', '金', '土', '日']
 
+    // 生徒ごとに固定色を割り当て（画面上の色分けと同じ考え方）
+    const names = Array.from(new Set(lessons.map(l => l.full_name))).sort()
+    const nameColor = new Map<string, typeof PRINT_PALETTE[number]>()
+    names.forEach((n, i) => nameColor.set(n, PRINT_PALETTE[i % PRINT_PALETTE.length]))
+
     // その日の予約を生徒ごとに連続コマ結合し、「時間 氏名」の行リストを返す
     function dayLines(ds: string): string {
       const dayItems = byDate[ds] || []
@@ -339,9 +369,15 @@ export default function SummerAdminPage() {
         allSegs.push(...segs)
       })
       allSegs.sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : a.name < b.name ? -1 : 1)
-      return allSegs.map(s =>
-        `<div class="ev ${s.absType ? 'abs' : ''}">${s.start}〜${s.end} ${esc(s.name)}${s.absType ? `<span class="tag">${esc(s.absType)}</span>` : ''}</div>`
-      ).join('')
+      return allSegs.map(s => {
+        const c = nameColor.get(s.name) || PRINT_PALETTE[0]
+        const style = s.absType ? '' : `background:${c.bg};color:${c.text};`
+        return `<div class="ev-chip ${s.absType ? 'abs' : ''}" style="${style}">
+          <span class="ev-time">${s.start}〜${s.end}</span>
+          <span class="ev-name">${esc(s.name)}</span>
+          ${s.absType ? `<span class="tag">${esc(s.absType)}</span>` : ''}
+        </div>`
+      }).join('')
     }
 
     function monthGridAll(y: number, m: number) {
