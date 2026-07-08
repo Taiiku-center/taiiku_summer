@@ -260,6 +260,7 @@ export default function SummerAdminPage() {
   .legend .boxg { display:inline-block; width:13px; height:13px; background:${light}; border:1px solid #9ca3af; vertical-align:-1px; margin-right:3px; }
   .page { page-break-after: always; }
   .page:last-child { page-break-after: auto; }
+
   table.cal { border-collapse:collapse; width:100%; table-layout:fixed; }
   table.cal th { font-size:13px; font-weight:700; color:#111827; padding:6px 0; border-bottom:2px solid #111827; }
   table.cal td { width:14.28%; height:118px; min-height:118px; vertical-align:top; border:1px solid #9ca3af; padding:5px; background:${light}; overflow:hidden; }
@@ -269,22 +270,24 @@ export default function SummerAdminPage() {
   .dnum { font-size:14px; font-weight:700; color:#111827; }
   td.has .dnum { font-weight:800; }
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
-  .ev.abs { text-decoration:line-through; font-weight:700; }
-  .ev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; background:#ffffff; color:#111827; border-radius:3px; padding:0 4px; margin-left:2px; font-size:11px; font-weight:700; }
-  table.wcal { border-collapse:collapse; width:100%; table-layout:fixed; font-size:10px; }
-  table.wcal th { font-size:11px; font-weight:700; color:#111827; padding:4px 2px; border:1px solid #111827; background:#ffffff; }
+
+  table.wcal { border-collapse:collapse; width:100%; table-layout:fixed; font-size:9px; }
+  table.wcal th { font-size:10px; font-weight:700; color:#111827; padding:3px 2px; border:1px solid #111827; background:#ffffff; }
   table.wcal th.sat { color:#111827; }
   table.wcal th.out { color:#9ca3af; }
   table.wcal th .wd { font-weight:400; color:#374151; }
-  table.wcal td { border:1px solid #9ca3af; padding:1px 3px; vertical-align:top; height:17px; }
-  table.wcal td.tcol, table.wcal th.tcol { width:44px; font-size:10px; font-weight:700; text-align:right; padding-right:5px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
+  table.wcal td { border:1px solid #9ca3af; padding:1px 2px; vertical-align:top; height:17px; }
+  table.wcal td.tcol, table.wcal th.tcol { width:42px; font-size:9px; font-weight:700; text-align:right; padding-right:4px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
   table.wcal td.has { background:#f3f4f6; }
   table.wcal td.out { background:#fafafa; }
-  .wev { font-weight:700; color:#111827; line-height:1.3; }
-  .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
-  .wgroup { margin-bottom:16px; }
+  .wpeople { display:grid; gap:1px 3px; align-items:start; }
+  .wpeople.many { grid-template-columns:repeat(2, minmax(0, 1fr)); }
+  .wev { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:7.5px; font-weight:700; color:#111827; line-height:1.1; }
+  .foot { margin-top:10px; font-size:10px; color:#6b7280; text-align:center; }
+  .wgroup { margin-bottom:8px; }
   .wgroup:last-child { margin-bottom:0; }
-  .wgroup .wtitle { font-size:14px; font-weight:800; margin-bottom:4px; }
+  .wgroup .wtitle { font-size:12px; font-weight:800; margin-bottom:2px; }
+
   @page { size:${pageSize} portrait; margin:10mm; }
   @media print { .noprint { display:none; } }
 `
@@ -326,9 +329,9 @@ export default function SummerAdminPage() {
     function cellContent(ds: string, slot: string): string {
       const items = (byDateSlot.get(`${ds}__${slot}`) || []).slice().sort((a, b) => a.full_name < b.full_name ? -1 : 1)
       if (items.length === 0) return ''
-      return items.map(l => `<div class="wev">${esc(l.full_name)}</div>`).join('')
+      const manyClass = items.length >= 4 ? ' many' : ''
+      return `<div class="wpeople${manyClass}">${items.map(l => `<div class="wev">${esc(l.full_name)}</div>`).join('')}</div>`
     }
-
     function weekGrid(weekStart: Date) {
       const days = Array.from({ length: 6 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d })
       const head = `<tr><th class="tcol"></th>${days.map((d, i) => {
@@ -707,3 +710,4 @@ export default function SummerAdminPage() {
     </div>
   )
 }
+
