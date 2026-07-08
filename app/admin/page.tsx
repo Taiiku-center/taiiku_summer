@@ -311,7 +311,7 @@ export default function SummerAdminPage() {
     const stu = students.find(s => s.id === studentId)
     if (!stu) return
     const pages = buildStudentPagesHtml(studentId)
-    openPrintWindow(`${stu.name} 授業カレンダー`, pages, '#111827', '#e6e6e6')
+    openPrintWindow(`${stu.name} 授業カレンダー`, pages, '#111827', '#e6e6e6', 'A4', 'landscape')
   }
 
   // 全生徒分をまとめた1つのカレンダー（各日付マスに「時間 生徒名」を列挙）
