@@ -31,26 +31,6 @@ const STUDENT_PALETTE = [
   { bg: 'bg-rose-100',    text: 'text-rose-800',    bar: 'bg-rose-400',    dot: 'bg-rose-500' },
 ]
 
-// 印刷用（生徒ごとの色分け）: STUDENT_PALETTE と対応する実HEXカラー
-const PRINT_PALETTE = [
-  { bg: '#fee2e2', text: '#991b1b' }, // red
-  { bg: '#ffedd5', text: '#9a3412' }, // orange
-  { bg: '#fef3c7', text: '#92400e' }, // amber
-  { bg: '#ecfccb', text: '#3f6212' }, // lime
-  { bg: '#dcfce7', text: '#166534' }, // green
-  { bg: '#d1fae5', text: '#065f46' }, // emerald
-  { bg: '#ccfbf1', text: '#115e59' }, // teal
-  { bg: '#cffafe', text: '#155e75' }, // cyan
-  { bg: '#e0f2fe', text: '#075985' }, // sky
-  { bg: '#dbeafe', text: '#1e40af' }, // blue
-  { bg: '#e0e7ff', text: '#3730a3' }, // indigo
-  { bg: '#ede9fe', text: '#5b21b6' }, // violet
-  { bg: '#f3e8ff', text: '#6b21a8' }, // purple
-  { bg: '#fae8ff', text: '#86198f' }, // fuchsia
-  { bg: '#fce7f3', text: '#9d174d' }, // pink
-  { bg: '#ffe4e6', text: '#9f1239' }, // rose
-]
-
 function clampToSummer(d: Date): Date {
   const ds = toDateStr(d)
   if (ds < SUMMER_START) return new Date(SUMMER_START + 'T00:00:00')
@@ -296,11 +276,18 @@ export default function SummerAdminPage() {
   .ev { font-size:13px; font-weight:800; color:#111827; margin-top:4px; line-height:1.35; }
   .ev.abs { text-decoration:line-through; font-weight:700; }
   .ev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; background:#ffffff; color:#111827; border-radius:3px; padding:0 4px; margin-left:2px; font-size:11px; font-weight:700; }
-  .ev-chip { display:flex; align-items:center; gap:5px; flex-wrap:wrap; border-radius:5px; padding:2px 6px; margin-top:3px; line-height:1.3; }
-  .ev-chip.abs { background:#ffffff; border:1px solid #9ca3af; text-decoration:line-through; }
-  .ev-chip .ev-time { font-size:11px; font-weight:800; white-space:nowrap; }
-  .ev-chip .ev-name { font-size:11px; font-weight:700; }
-  .ev-chip .tag { text-decoration:none; border:1px solid currentColor; background:#ffffff; color:inherit; border-radius:3px; padding:0 4px; font-size:10px; font-weight:700; }
+  table.wcal { border-collapse:collapse; width:100%; table-layout:fixed; font-size:10px; }
+  table.wcal th { font-size:11px; font-weight:700; color:#111827; padding:4px 2px; border:1px solid #111827; background:#ffffff; }
+  table.wcal th.sat { color:#111827; }
+  table.wcal th.out { color:#9ca3af; }
+  table.wcal th .wd { font-weight:400; color:#374151; }
+  table.wcal td { border:1px solid #9ca3af; padding:2px 3px; vertical-align:top; height:24px; }
+  table.wcal td.tcol, table.wcal th.tcol { width:44px; font-size:10px; font-weight:700; text-align:right; padding-right:5px; white-space:nowrap; background:#ffffff; border:1px solid #111827; }
+  table.wcal td.has { background:#f3f4f6; }
+  table.wcal td.out { background:#fafafa; }
+  .wev { font-weight:700; color:#111827; line-height:1.3; }
+  .wev.abs { text-decoration:line-through; font-weight:600; color:#4b5563; }
+  .wev .tag { display:inline-block; text-decoration:none; border:1px solid #111827; border-radius:3px; padding:0 3px; margin-left:2px; font-size:8px; font-weight:700; }
   .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
   @page { size:A4 portrait; margin:12mm; }
   @media print { .noprint { display:none; } }
@@ -329,104 +316,69 @@ export default function SummerAdminPage() {
   }
 
   // 全生徒分をまとめた1つのカレンダー（各日付マスに「時間 生徒名」を列挙）
-  function buildCombinedPagesHtml(): string {
-    const byDate: Record<string, LessonRow[]> = {}
-    lessons.forEach(l => { (byDate[l.date] = byDate[l.date] || []).push(l) })
+  // 週グリッド版（白黒）：行＝時間、列＝月〜土。生徒が増えても1マス＝1時間帯なので崩れない
+  function buildCombinedWeekPagesHtml(): string {
+    const byDateSlot = new Map<string, LessonRow[]>()
+    lessons.forEach(l => {
+      const k = `${l.date}__${l.start_time}`
+      const arr = byDateSlot.get(k) || []
+      arr.push(l)
+      byDateSlot.set(k, arr)
+    })
     const absOf = (date: string, time: string, studentId: string) =>
       absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
-    const dowH = ['月', '火', '水', '木', '金', '土', '日']
+    const dowH = ['月', '火', '水', '木', '金', '土']
 
-    // 生徒ごとに固定色を割り当て（画面上の色分けと同じ考え方）
-    const names = Array.from(new Set(lessons.map(l => l.full_name))).sort()
-    const nameColor = new Map<string, typeof PRINT_PALETTE[number]>()
-    names.forEach((n, i) => nameColor.set(n, PRINT_PALETTE[i % PRINT_PALETTE.length]))
-
-    // その日の予約を生徒ごとに連続コマ結合し、「時間 氏名」の行リストを返す
-    function dayLines(ds: string): string {
-      const dayItems = byDate[ds] || []
-      if (dayItems.length === 0) return ''
-      const byStudent = new Map<string, LessonRow[]>()
-      dayItems.forEach(l => {
-        const arr = byStudent.get(l.student_id) || []
-        arr.push(l)
-        byStudent.set(l.student_id, arr)
-      })
-      type Seg = { start: string; end: string; name: string; absType?: string }
-      const allSegs: Seg[] = []
-      byStudent.forEach((list, studentId) => {
-        const sorted = list.slice().sort((a, b) => a.start_time < b.start_time ? -1 : 1)
-        const segs: Seg[] = []
-        sorted.forEach(l => {
-          const ab = absOf(ds, l.start_time, studentId)
-          if (ab) { segs.push({ start: l.start_time, end: l.end_time, name: l.full_name, absType: ab.type }); return }
-          const lastSeg = segs[segs.length - 1]
-          if (lastSeg && !lastSeg.absType && lastSeg.end === l.start_time) {
-            lastSeg.end = l.end_time
-          } else {
-            segs.push({ start: l.start_time, end: l.end_time, name: l.full_name })
-          }
-        })
-        allSegs.push(...segs)
-      })
-      allSegs.sort((a, b) => a.start < b.start ? -1 : a.start > b.start ? 1 : a.name < b.name ? -1 : 1)
-      return allSegs.map(s => {
-        const c = nameColor.get(s.name) || PRINT_PALETTE[0]
-        const style = s.absType ? '' : `background:${c.bg};color:${c.text};`
-        return `<div class="ev-chip ${s.absType ? 'abs' : ''}" style="${style}">
-          <span class="ev-time">${s.start}〜${s.end}</span>
-          <span class="ev-name">${esc(s.name)}</span>
-          ${s.absType ? `<span class="tag">${esc(s.absType)}</span>` : ''}
-        </div>`
+    function cellContent(ds: string, slot: string): string {
+      const items = (byDateSlot.get(`${ds}__${slot}`) || []).slice().sort((a, b) => a.full_name < b.full_name ? -1 : 1)
+      if (items.length === 0) return ''
+      return items.map(l => {
+        const ab = absOf(ds, slot, l.student_id)
+        return `<div class="wev ${ab ? 'abs' : ''}">${esc(l.full_name)}${ab ? `<span class="tag">${esc(ab.type)}</span>` : ''}</div>`
       }).join('')
     }
 
-    function monthGridAll(y: number, m: number) {
-      const first = new Date(y, m, 1)
-      const last = new Date(y, m + 1, 0)
-      const startDow = (first.getDay() + 6) % 7
-      const cells: string[] = []
-      for (let i = 0; i < startDow; i++) cells.push('<td class="empty"></td>')
-      for (let d = 1; d <= last.getDate(); d++) {
-        const dateObj = new Date(y, m, d)
-        const ds = toDateStr(dateObj)
-        const dow = dateObj.getDay()
-        const dayItems = byDate[ds] || []
+    function weekGrid(weekStart: Date) {
+      const days = Array.from({ length: 6 }, (_, i) => { const d = new Date(weekStart); d.setDate(d.getDate() + i); return d })
+      const head = `<tr><th class="tcol"></th>${days.map((d, i) => {
+        const ds = toDateStr(d)
         const inP = ds >= SUMMER_START && ds <= SUMMER_END
-        let inner = `<div class="dnum ${dow === 0 ? 'sun' : dow === 6 ? 'sat' : ''}">${d}</div>`
-        inner += dayLines(ds)
-        cells.push(`<td class="${dayItems.length ? 'has' : ''} ${!inP ? 'out' : ''}">${inner}</td>`)
-      }
-      while (cells.length % 7 !== 0) cells.push('<td class="empty"></td>')
-      let rows = ''
-      for (let i = 0; i < cells.length; i += 7) rows += `<tr>${cells.slice(i, i + 7).join('')}</tr>`
-      const head = `<tr>${dowH.map((h, i) => `<th class="${i === 6 ? 'sun' : i === 5 ? 'sat' : ''}">${h}</th>`).join('')}</tr>`
-      return `<table class="cal"><thead>${head}</thead><tbody>${rows}</tbody></table>`
+        return `<th class="${i === 5 ? 'sat' : ''} ${!inP ? 'out' : ''}">${dowH[i]}<br/><span class="wd">${d.getMonth() + 1}/${d.getDate()}</span></th>`
+      }).join('')}</tr>`
+      const rows = TIME_SLOTS.map(slot => {
+        const cells = days.map(d => {
+          const ds = toDateStr(d)
+          const inP = ds >= SUMMER_START && ds <= SUMMER_END
+          const content = inP ? cellContent(ds, slot) : ''
+          return `<td class="${content ? 'has' : ''} ${!inP ? 'out' : ''}">${content}</td>`
+        }).join('')
+        return `<tr><td class="tcol">${slot}</td>${cells}</tr>`
+      }).join('')
+      return `<table class="wcal"><thead>${head}</thead><tbody>${rows}</tbody></table>`
     }
 
-    const monthsSet = new Set<string>()
-    const cur = new Date(SUMMER_START + 'T00:00:00')
+    // SUMMER_START（月曜）起点で週を列挙
+    const weeks: Date[] = []
+    let cur = new Date(SUMMER_START + 'T00:00:00')
     const end = new Date(SUMMER_END + 'T00:00:00')
-    while (cur <= end) { monthsSet.add(`${cur.getFullYear()}-${cur.getMonth()}`); cur.setDate(cur.getDate() + 1) }
-    const monthList = Array.from(monthsSet).map(k => k.split('-').map(Number) as [number, number])
-    const hasAbs = absences.length > 0
+    while (cur <= end) { weeks.push(new Date(cur)); cur = new Date(cur); cur.setDate(cur.getDate() + 7) }
 
-    return monthList.map(([y, m], idx) => {
-      const cnt = lessons.filter(l => { const d = new Date(l.date + 'T00:00:00'); return d.getFullYear() === y && d.getMonth() === m }).length
+    return weeks.map((weekStart, idx) => {
+      const weekEnd = new Date(weekStart); weekEnd.setDate(weekEnd.getDate() + 5)
       return `<section class="page">
         <div class="head">
           <div><div class="name">夏期講習カレンダー</div><div class="sub">${SUMMER_START}〜${SUMMER_END}</div></div>
         </div>
-        <div class="mtitle">${y}年${m + 1}月<span class="mcount">この月の授業：${cnt}コマ</span></div>
-        <div class="legend"><span class="box"></span>授業のある日　<span class="boxg"></span>授業のない日${hasAbs ? '　／　取り消し線＝欠席・遅刻連絡あり' : ''}</div>
-        ${monthGridAll(y, m)}
-        <div class="foot">大育進学センター 夏期講習${monthList.length > 1 ? `　（${idx + 1}/${monthList.length}ページ）` : ''}</div>
+        <div class="mtitle">${weekStart.getMonth() + 1}/${weekStart.getDate()} 〜 ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}</div>
+        ${weekGrid(weekStart)}
+        <div class="foot">大育進学センター 夏期講習　（${idx + 1}/${weeks.length}ページ）</div>
       </section>`
     }).join('')
   }
 
   function printAllStudentCalendars() {
     if (students.length === 0) { alert('予約のある生徒がいません。'); return }
-    const combined = buildCombinedPagesHtml()
+    const combined = buildCombinedWeekPagesHtml()
     openPrintWindow('夏期講習カレンダー', combined, '#111827', '#e6e6e6')
   }
 
