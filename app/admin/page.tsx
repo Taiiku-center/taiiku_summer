@@ -246,7 +246,7 @@ export default function SummerAdminPage() {
     return pages
   }
 
-  const PRINT_STYLE = (primary: string, light: string, pageSize: string = 'A4') => `
+  const PRINT_STYLE = (primary: string, light: string, pageSize: string = 'A4', pageOrientation: 'portrait' | 'landscape' = 'portrait') => `
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#111827; margin:0; padding:24px; }
   .head { display:flex; align-items:center; justify-content:space-between; border-bottom:4px solid ${primary}; padding-bottom:12px; margin-bottom:14px; }
@@ -288,13 +288,13 @@ export default function SummerAdminPage() {
   .wgroup:last-child { margin-bottom:0; }
   .wgroup .wtitle { font-size:12px; font-weight:800; margin-bottom:2px; }
 
-  @page { size:${pageSize} portrait; margin:10mm; }
+  @page { size:${pageSize} ${pageOrientation}; margin:10mm; }
   @media print { .noprint { display:none; } }
 `
 
-  function openPrintWindow(title: string, bodyHtml: string, primary: string, light: string, pageSize: string = 'A4') {
+  function openPrintWindow(title: string, bodyHtml: string, primary: string, light: string, pageSize: string = 'A4', pageOrientation: 'portrait' | 'landscape' = 'portrait') {
     const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(title)}</title>
-<style>${PRINT_STYLE(primary, light, pageSize)}</style></head><body>
+<style>${PRINT_STYLE(primary, light, pageSize, pageOrientation)}</style></head><body>
   ${bodyHtml}
   <button class="noprint" onclick="window.print()" style="position:fixed;top:12px;right:12px;padding:8px 16px;font-size:14px;background:${primary};color:#fff;border:none;border-radius:8px;cursor:pointer;">印刷 / PDF保存</button>
 </body></html>`
@@ -382,7 +382,7 @@ export default function SummerAdminPage() {
   function printAllStudentCalendars() {
     if (students.length === 0) { alert('予約のある生徒がいません。'); return }
     const combined = buildCombinedWeekPagesHtml()
-    openPrintWindow('夏期講習カレンダー', combined, '#111827', '#e6e6e6', 'B4')
+    openPrintWindow('夏期講習カレンダー', combined, '#111827', '#e6e6e6', 'B4', 'landscape')
   }
 
   function DayDetail({ date }: { date: string }) {
