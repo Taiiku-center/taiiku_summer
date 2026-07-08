@@ -5,6 +5,7 @@ import {
   getSession, ELEMENTARY_COURSES, JUNIOR_COURSES, setSelectedCourse,
   type SummerStudent, type SummerCourse,
 } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 export default function SummerApplyCoursePage() {
   const router = useRouter()
@@ -41,6 +42,14 @@ export default function SummerApplyCoursePage() {
       </header>
 
       <main className="px-4 py-5 max-w-2xl mx-auto space-y-4 pb-24">
+        <GuideBox
+          steps={[
+            'ホームから「夏期講習の授業を申込む」を選びます。',
+            '希望するコースを選びます。',
+            '内容を確認して、次の日程選択へ進みます。',
+          ]}
+          note="コースを間違えた場合は、戻って選び直してください。"
+        />
         <div>
           <h2 className="text-lg font-bold text-gray-800">コースを選択してください</h2>
           <p className="text-sm text-gray-500 mt-1 leading-relaxed">

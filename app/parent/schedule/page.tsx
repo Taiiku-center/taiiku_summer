@@ -7,6 +7,7 @@ import {
   getSelectedCourse, clearSelectedCourse,
   type SummerLesson, type SummerStudent, type SelectedCourse,
 } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 const DAYS_JP = ['月', '火', '水', '木', '金', '土', '日']
 const NOTIFY_EMAIL = 'kusunoki.infinite@gmail.com'
@@ -416,6 +417,15 @@ function SummerScheduleInner() {
       </header>
 
       <main className="max-w-4xl mx-auto px-3 py-4 space-y-4">
+        <GuideBox
+          steps={[
+            'カレンダーから希望日を選びます。',
+            '表示された時間帯から、希望する授業時間を選びます。',
+            '複数選べる場合は、必要な時間をすべて選びます。',
+            '内容を確認し、「申込む」を押します。',
+          ]}
+          note="すでに申込み済みの時間は選べない場合があります。"
+        />
         {isCourseMode && courseInfo && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center justify-between">
