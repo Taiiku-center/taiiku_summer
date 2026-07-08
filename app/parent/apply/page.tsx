@@ -44,7 +44,6 @@ export default function SummerApplyCoursePage() {
       <main className="px-4 py-5 max-w-2xl mx-auto space-y-4 pb-24">
         <GuideBox
           steps={[
-            'ホームから「夏期講習の授業を申込む」を選びます。',
             '希望するコースを選びます。',
             '内容を確認して、次の日程選択へ進みます。',
           ]}
