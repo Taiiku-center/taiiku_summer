@@ -175,16 +175,16 @@ export default function SummerAdminPage() {
     URL.revokeObjectURL(url)
   }
 
-  function printStudentCalendar(studentId: string) {
+  const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
+
+  // 生徒1人分のカレンダー印刷ページ（月ごとの<section class="page">を連結したHTML断片）を生成
+  function buildStudentPagesHtml(studentId: string): string {
     const stu = students.find(s => s.id === studentId)
-    if (!stu) return
-    const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c] as string))
+    if (!stu) return ''
     const mine = lessons.filter(l => l.student_id === studentId)
     const byDate: Record<string, LessonRow[]> = {}
     mine.forEach(l => { (byDate[l.date] = byDate[l.date] || []).push(l) })
     const absOf = (date: string, time: string) => absences.find(a => a.student_id === studentId && a.date === date && a.time === time)
-    const primary = '#111827'   // 白黒印刷でも見やすいよう黒基調
-    const light   = '#e6e6e6'   // 授業のある日の網掛け（グレー）
     const dowH = ['月', '火', '水', '木', '金', '土', '日']
 
     function monthGrid(y: number, m: number) {
@@ -236,8 +236,10 @@ export default function SummerAdminPage() {
       </section>`
     }).join('')
 
-    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(stu.name)} 授業カレンダー</title>
-<style>
+    return pages
+  }
+
+  const PRINT_STYLE = (primary: string, light: string) => `
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   body { font-family: "Yu Gothic","YuGothic","Meiryo",sans-serif; color:#111827; margin:0; padding:24px; }
   .head { display:flex; align-items:center; justify-content:space-between; border-bottom:4px solid ${primary}; padding-bottom:12px; margin-bottom:14px; }
@@ -265,8 +267,12 @@ export default function SummerAdminPage() {
   .foot { margin-top:16px; font-size:11px; color:#6b7280; text-align:center; }
   @page { size:A4 portrait; margin:12mm; }
   @media print { .noprint { display:none; } }
-</style></head><body>
-  ${pages}
+`
+
+  function openPrintWindow(title: string, bodyHtml: string, primary: string, light: string) {
+    const html = `<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>${esc(title)}</title>
+<style>${PRINT_STYLE(primary, light)}</style></head><body>
+  ${bodyHtml}
   <button class="noprint" onclick="window.print()" style="position:fixed;top:12px;right:12px;padding:8px 16px;font-size:14px;background:${primary};color:#fff;border:none;border-radius:8px;cursor:pointer;">印刷 / PDF保存</button>
 </body></html>`
 
@@ -276,6 +282,19 @@ export default function SummerAdminPage() {
     w.document.close()
     w.focus()
     setTimeout(() => { try { w.print() } catch {} }, 400)
+  }
+
+  function printStudentCalendar(studentId: string) {
+    const stu = students.find(s => s.id === studentId)
+    if (!stu) return
+    const pages = buildStudentPagesHtml(studentId)
+    openPrintWindow(`${stu.name} 授業カレンダー`, pages, '#111827', '#e6e6e6')
+  }
+
+  function printAllStudentCalendars() {
+    if (students.length === 0) { alert('予約のある生徒がいません。'); return }
+    const allPages = students.map(s => buildStudentPagesHtml(s.id)).join('')
+    openPrintWindow('生徒全員 授業カレンダー', allPages, '#111827', '#e6e6e6')
   }
 
   function DayDetail({ date }: { date: string }) {
@@ -394,6 +413,11 @@ export default function SummerAdminPage() {
           disabled={!printStudentId}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 disabled:opacity-40 transition-colors">
           🖨 カレンダー印刷 / PDF
+        </button>
+        <button onClick={printAllStudentCalendars}
+          disabled={students.length === 0}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 disabled:opacity-40 transition-colors">
+          🖨 生徒全員分を印刷 / PDF
         </button>
       </div>
 
