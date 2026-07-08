@@ -50,14 +50,7 @@ export default function SummerApplyCoursePage() {
           ]}
           note="コースを間違えた場合は、戻って選び直してください。"
         />
-        <div>
-          <h2 className="text-lg font-bold text-gray-800">コースを選択してください</h2>
-          <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-            ご希望のコースを1つ選択してください。<br />
-            コースによって、受講時間・日数が異なります。<br />
-            どのコースがよいか迷われる場合は、先にご相談ください。
-          </p>
-        </div>
+        <h2 className="text-lg font-bold text-gray-800">コースを選択してください</h2>
 
         {([['小学生', ELEMENTARY_COURSES, '1日1時間〜2時間'], ['中学生', JUNIOR_COURSES, '1日2時間〜3時間']] as const).map(([cat, list, hint]) => (
           <div key={cat}>
