@@ -45,7 +45,8 @@ export default function SummerParentPage() {
 
         <div className="mb-4">
           <GuideBox
-            defaultOpen
+            alwaysOpen
+            title="以下のメニューから、利用したい機能を選びます"
             bullets={[
               '夏期講習の授業を申込む',
               '授業予定を確認する',
@@ -53,7 +54,7 @@ export default function SummerParentPage() {
               '欠席・遅刻の履歴を見る',
               '不具合を報告する',
             ]}
-            note="ログイン後、最初に表示される画面です。以下のメニューから、利用したい機能を選びます。はじめての方はまず「夏期講習の授業を申込む」から、コース選びと日程の申込みができます。"
+            note="ログイン後、最初に表示される画面です。はじめての方はまず「夏期講習の授業を申込む」から、コース選びと日程の申込みができます。"
           />
         </div>
 
