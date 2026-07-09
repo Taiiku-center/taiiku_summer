@@ -59,7 +59,7 @@ export type SummerCourseApplication = {
 }
 
 // 1時間帯（30分）あたりの定員（満席判定に使用）
-export const SLOT_CAPACITY = 6
+export const SLOT_CAPACITY = 8
 
 export type SummerCourse = {
   id: string
