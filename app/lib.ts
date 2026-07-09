@@ -169,3 +169,43 @@ export function getSelectedCourse(): SelectedCourse | null {
 export function clearSelectedCourse() {
   if (typeof window !== 'undefined') sessionStorage.removeItem(SELECTED_COURSE_KEY)
 }
+
+// ── コース時間の計算（すべて「分」単位で計算し、表示のみ変換することでズレを防ぐ） ──
+
+export function lessonMinutes(startTime: string, endTimeStr: string): number {
+  const [sh, sm] = startTime.split(':').map(Number)
+  const [eh, em] = endTimeStr.split(':').map(Number)
+  return (eh * 60 + em) - (sh * 60 + sm)
+}
+
+// 分を「◯時間◯分」に整形（0分は「0分」、時間のみ・分のみにも対応）
+export function formatHM(minutes: number): string {
+  const m = Math.max(0, Math.round(minutes))
+  if (m === 0) return '0分'
+  const h = Math.floor(m / 60), r = m % 60
+  return `${h > 0 ? `${h}時間` : ''}${r > 0 ? `${r}分` : ''}`
+}
+
+function coursesOf(category: CourseCategory): SummerCourse[] {
+  if (category === '小学生') return ELEMENTARY_COURSES
+  if (category === '中学生') return JUNIOR_COURSES
+  return RESIDENT_COURSES
+}
+
+// 選択中の合計時間が現在のコース時間を超えている場合に、次に適したコースを提案する
+// （自動変更はしない。保護者への案内表示にのみ使用）
+export function findRecommendedCourse(
+  category: CourseCategory,
+  current: { hours: number; unlimited?: boolean },
+  totalMinutes: number
+): SummerCourse | null {
+  if (current.unlimited) return null
+  const totalHours = totalMinutes / 60
+  if (totalHours <= current.hours) return null
+  // 現在のコースより上位のコースのうち、合計時間が「そのコースの時間以上」に達している
+  // 最も上位（最も近い適切な）コースを提案する。まだどの上位コースの時間にも達していなければ提案しない。
+  const candidates = coursesOf(category)
+    .filter(c => !c.unlimited && c.hours > current.hours)
+    .sort((a, b) => b.hours - a.hours)
+  return candidates.find(c => c.hours <= totalHours) || null
+}

@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import {
   getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END,
-  getSelectedCourse, clearSelectedCourse,
+  getSelectedCourse, clearSelectedCourse, lessonMinutes, formatHM, findRecommendedCourse,
   type SummerLesson, type SummerStudent, type SelectedCourse,
 } from '../../lib'
 import GuideBox from '../../components/GuideBox'
@@ -164,9 +164,28 @@ function SummerScheduleInner() {
 
   const courseIsUnlimited = !!courseInfo?.unlimited
   const courseRequiredHours = courseInfo?.hours ?? 0
-  const courseRequiredSlots = courseRequiredHours * 2
-  const courseSelectedHours = selected.size * 0.5
-  const courseCanProceed = courseIsUnlimited ? selected.size > 0 : (selected.size >= courseRequiredSlots && selected.size > 0)
+  const courseRequiredMinutes = courseRequiredHours * 60
+
+  // 同じコース（course_name一致）で過去に申込み済みの授業時間（分）。
+  // summer_lessons の実データから毎回計算するため、個別キャンセルがあってもズレない。
+  const coursePreviousMinutes = (isCourseMode && courseInfo)
+    ? existing.filter(l => l.course_name === courseInfo.name).reduce((sum, l) => sum + lessonMinutes(l.start_time, l.end_time), 0)
+    : 0
+  const courseSessionMinutes = Array.from(selected).reduce((sum, k) => {
+    const sep = k.indexOf('__')
+    const slot = k.slice(sep + 2)
+    return sum + lessonMinutes(slot, endTime(slot))
+  }, 0)
+  const courseTotalMinutes = coursePreviousMinutes + courseSessionMinutes
+  const courseOverMinutes = courseIsUnlimited ? 0 : Math.max(0, courseTotalMinutes - courseRequiredMinutes)
+  const courseIsOver = !courseIsUnlimited && courseTotalMinutes > courseRequiredMinutes
+  const courseRecommended = (isCourseMode && courseInfo && !courseIsUnlimited)
+    ? findRecommendedCourse(courseInfo.category, { hours: courseRequiredHours, unlimited: false }, courseTotalMinutes)
+    : null
+
+  // 表示用（互換のため時間表記も残す）
+  const courseSelectedHours = courseSessionMinutes / 60
+  const courseCanProceed = selected.size > 0
 
   async function handleCourseSubmit() {
     if (!student || !courseInfo || !courseCanProceed) return
@@ -355,7 +374,7 @@ function SummerScheduleInner() {
           {courseInfo && (
             <div className="bg-blue-50 rounded-2xl p-4 text-left text-sm space-y-1">
               <div className="flex justify-between"><span className="text-gray-500">コース</span><span className="font-bold text-blue-700">{courseInfo.category} {courseInfo.name}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">合計時間数</span><span className="font-bold text-blue-700">{courseSelectedHours}H</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">これまでの合計時間</span><span className="font-bold text-blue-700">{formatHM(courseTotalMinutes)}</span></div>
             </div>
           )}
           <button onClick={() => router.push('/parent')} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl active:bg-blue-700">ホームに戻る</button>
@@ -385,10 +404,27 @@ function SummerScheduleInner() {
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">生徒名</span><span className="text-sm font-bold text-gray-800">{student.full_name}</span></div>
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span></div>
             {!courseIsUnlimited && (
-              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">必要時間数</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span></div>
+              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コースの合計時間</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間</span></div>
             )}
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">合計時間数</span><span className="text-sm font-bold text-blue-600">{courseSelectedHours}H</span></div>
+            {coursePreviousMinutes > 0 && (
+              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">申込み済み時間</span><span className="text-sm font-bold text-gray-800">{formatHM(coursePreviousMinutes)}</span></div>
+            )}
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">今回選択した時間</span><span className="text-sm font-bold text-gray-800">{formatHM(courseSessionMinutes)}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">申込み後の合計時間</span><span className={`text-sm font-bold ${courseIsOver ? 'text-red-600' : 'text-blue-600'}`}>{formatHM(courseTotalMinutes)}</span></div>
           </div>
+
+          {courseIsOver && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3">
+              <div className="text-sm font-bold text-red-600">選択中の授業時間がコース時間を超えています</div>
+              <div className="text-xs text-red-500 mt-1">現在：{formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間</div>
+              <div className="text-xs text-red-500">超過：{formatHM(courseOverMinutes)}</div>
+            </div>
+          )}
+          {courseRecommended && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700">
+              <span className="font-bold">{courseRecommended.name}（{courseRecommended.hours}H）</span>がおすすめです。コースを変更したい場合はコース選択画面から変更できます。
+            </div>
+          )}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="px-5 py-3 border-b border-gray-100 text-sm font-semibold text-gray-600">選択した日程（{sortedSelected.length}コマ）</div>
             <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
@@ -438,31 +474,50 @@ function SummerScheduleInner() {
             {courseIsUnlimited ? (
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">選択済み</span>
-                  <span className="text-base font-bold text-blue-600">{courseSelectedHours}H</span>
+                  <span className="text-sm text-gray-500">合計選択時間</span>
+                  <span className="text-base font-bold text-blue-600">{formatHM(courseTotalMinutes)}</span>
                 </div>
+                {coursePreviousMinutes > 0 && (
+                  <div className="text-xs text-gray-400 mt-1">申込み済み：{formatHM(coursePreviousMinutes)}　＋　今回選択中：{formatHM(courseSessionMinutes)}</div>
+                )}
                 <div className="text-xs text-gray-400 mt-1.5">何時間でも受講OK！ 1コマ以上選べば確認画面に進めます。</div>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                  <span className="text-sm text-gray-500">必要時間数</span>
-                  <span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span>
+                  <span className="text-sm text-gray-500">コース時間</span>
+                  <span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間</span>
                 </div>
                 <div className="mt-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm text-gray-500">選択済み</span>
-                    <span className={`text-base font-bold ${courseSelectedHours >= courseRequiredHours ? 'text-green-600' : 'text-blue-600'}`}>{courseSelectedHours}H／{courseRequiredHours}H</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm text-gray-500">選択中：合計</span>
+                    <span className={`text-base font-bold ${courseIsOver ? 'text-red-600' : courseTotalMinutes >= courseRequiredMinutes ? 'text-green-600' : 'text-blue-600'}`}>
+                      {formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間
+                    </span>
                   </div>
+                  {coursePreviousMinutes > 0 && (
+                    <div className="text-xs text-gray-400 mb-1.5">申込み済み：{formatHM(coursePreviousMinutes)}　＋　今回選択中：{formatHM(courseSessionMinutes)}</div>
+                  )}
                   <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                    <div className={`h-full rounded-full transition-all ${courseSelectedHours >= courseRequiredHours ? 'bg-green-500' : 'bg-blue-500'}`}
-                      style={{ width: `${Math.min(100, (courseSelectedHours / courseRequiredHours) * 100)}%` }} />
+                    <div className={`h-full rounded-full transition-all ${courseIsOver ? 'bg-red-500' : courseTotalMinutes >= courseRequiredMinutes ? 'bg-green-500' : 'bg-blue-500'}`}
+                      style={{ width: `${Math.min(100, (courseTotalMinutes / courseRequiredMinutes) * 100)}%` }} />
                   </div>
-                  {courseSelectedHours < courseRequiredHours
-                    ? <div className="text-xs text-gray-400 mt-1.5">{courseSelectedHours}H 選択中です</div>
-                    : courseSelectedHours === courseRequiredHours
-                      ? <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>
-                      : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数を {courseSelectedHours - courseRequiredHours}H 超えています（このまま進めます）。</div>}
+                  {courseIsOver ? (
+                    <div className="mt-2 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
+                      <div className="text-xs font-bold text-red-600">選択中の授業時間がコース時間を超えています</div>
+                      <div className="text-xs text-red-500 mt-0.5">現在：{formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間</div>
+                      <div className="text-xs text-red-500">超過：{formatHM(courseOverMinutes)}</div>
+                    </div>
+                  ) : courseTotalMinutes === courseRequiredMinutes ? (
+                    <div className="text-xs text-green-600 mt-1.5 font-medium">コース時間ちょうどです。確認画面に進めます。</div>
+                  ) : (
+                    <div className="text-xs text-gray-400 mt-1.5">複数回に分けて申込みできます。残り {formatHM(courseRequiredMinutes - courseTotalMinutes)} で予定のコース時間になります。</div>
+                  )}
+                  {courseRecommended && (
+                    <div className="mt-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700">
+                      <span className="font-bold">{courseRecommended.name}（{courseRecommended.hours}H）</span>がおすすめです。コースを変更したい場合はコース選択画面から変更できます。
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -656,7 +711,7 @@ function SummerScheduleInner() {
         {view !== 'month' && isCourseMode && courseInfo && (
           <button onClick={() => setCourseStep('confirm')} disabled={!courseCanProceed}
             className="w-full bg-blue-600 text-white py-4 rounded-2xl text-base font-medium active:bg-blue-700 disabled:opacity-50">
-            {courseCanProceed ? '確認画面へ進む' : `${courseSelectedHours}H 選択中です`}
+            {courseCanProceed ? '確認画面へ進む' : '授業を選択してください'}
           </button>
         )}
       </main>

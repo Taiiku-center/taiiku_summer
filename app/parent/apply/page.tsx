@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import {
   getSession, ELEMENTARY_COURSES, JUNIOR_COURSES, RESIDENT_COURSES, setSelectedCourse,
+  lessonMinutes, formatHM, findRecommendedCourse,
   type SummerStudent, type SummerCourse, type CourseCategory, type SummerCourseApplication,
 } from '../../lib'
 import GuideBox from '../../components/GuideBox'
@@ -32,6 +33,7 @@ export default function SummerApplyCoursePage() {
   const [student, setStudent]   = useState<SummerStudent | null>(null)
   const [mode, setMode]         = useState<Mode>('loading')
   const [existingApp, setExistingApp] = useState<SummerCourseApplication | null>(null)
+  const [appliedMinutes, setAppliedMinutes] = useState(0)
   const [category, setCategory] = useState<CourseCategory | null>(null)
   const [course, setCourse]     = useState<SummerCourse | null>(null)
   const [openCat, setOpenCat]   = useState<CourseCategory | null>('小学生')
@@ -49,11 +51,29 @@ export default function SummerApplyCoursePage() {
       const { data } = await supabase.from('summer_course_applications')
         .select('*').eq('student_id', studentId).neq('status', 'cancelled')
         .order('created_at', { ascending: false }).limit(1).maybeSingle()
-      if (data) { setExistingApp(data); setMode('confirm') }
-      else setMode('select')
+      if (data) {
+        setExistingApp(data)
+        setMode('confirm')
+        fetchAppliedMinutes(studentId, data.course_name)
+      } else {
+        setMode('select')
+      }
     } catch {
       setMode('select')
     }
+  }
+
+  // 同じコース（course_name一致）で実際に申込み済みの授業時間（分）を、
+  // summer_lessons の実データから毎回計算する（個別キャンセルがあってもズレない）
+  async function fetchAppliedMinutes(studentId: string, courseName: string) {
+    try {
+      const supabase = createClient()
+      const { data } = await supabase.from('summer_lessons')
+        .select('start_time, end_time')
+        .eq('student_id', studentId).eq('course_name', courseName).neq('status', 'cancelled')
+      const mins = (data || []).reduce((sum, l) => sum + lessonMinutes(l.start_time, l.end_time), 0)
+      setAppliedMinutes(mins)
+    } catch { /* 表示できなくても致命的ではないため握りつぶす */ }
   }
 
   if (!student || mode === 'loading') return null
@@ -79,6 +99,11 @@ export default function SummerApplyCoursePage() {
     }
     setMode('select')
   }
+
+  const existingIsUnlimited = existingApp ? existingApp.required_hours === 0 : false
+  const recommendedForExisting = existingApp
+    ? findRecommendedCourse(existingApp.course_category, { hours: existingApp.required_hours, unlimited: existingIsUnlimited }, appliedMinutes)
+    : null
 
   // ══ 既にコースを選んだことがある場合：現在のコースを表示 ══
   if (mode === 'confirm' && existingApp) {
@@ -108,9 +133,16 @@ export default function SummerApplyCoursePage() {
             <div className="text-sm text-gray-500">現在選択しているコース</div>
             <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
             {existingApp.required_hours > 0 && (
-              <div className="text-sm text-gray-500 mt-2">必要時間数：<span className="font-bold text-gray-800">{existingApp.required_hours}H</span></div>
+              <div className="text-sm text-gray-500 mt-2">コースの合計時間：<span className="font-bold text-gray-800">{existingApp.required_hours}時間</span></div>
             )}
+            <div className="text-sm text-gray-500 mt-1">これまでの合計時間：<span className="font-bold text-gray-800">{formatHM(appliedMinutes)}</span></div>
           </div>
+
+          {recommendedForExisting && (
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700">
+              合計時間が増えたため、<span className="font-bold">{recommendedForExisting.name}（{recommendedForExisting.hours}H）</span>がおすすめです。変更したい場合は「コースを変更する」から選び直せます。
+            </div>
+          )}
 
           <button onClick={() => goToScheduleWith(existingApp.course_category, findCourse(existingApp.course_category, existingApp.course_name) || {
             id: 'existing', name: existingApp.course_name, hours: existingApp.required_hours, example: '', target: '', unlimited: existingApp.required_hours === 0,
@@ -182,6 +214,9 @@ export default function SummerApplyCoursePage() {
                             </div>
                             <span className="font-bold text-gray-800 truncate">{c.name}</span>
                             {c.popular && <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full flex-shrink-0">人気</span>}
+                            {recommendedForExisting?.id === c.id && (
+                              <span className="text-[10px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full flex-shrink-0">こちらがおすすめ</span>
+                            )}
                           </div>
                           {!c.unlimited && <span className={`text-lg font-bold flex-shrink-0 ${color.text}`}>{c.hours}H</span>}
                         </div>
