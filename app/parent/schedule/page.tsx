@@ -162,10 +162,11 @@ function SummerScheduleInner() {
     await fetchExisting()
   }
 
+  const courseIsUnlimited = !!courseInfo?.unlimited
   const courseRequiredHours = courseInfo?.hours ?? 0
   const courseRequiredSlots = courseRequiredHours * 2
   const courseSelectedHours = selected.size * 0.5
-  const courseCanProceed = selected.size >= courseRequiredSlots && selected.size > 0
+  const courseCanProceed = courseIsUnlimited ? selected.size > 0 : (selected.size >= courseRequiredSlots && selected.size > 0)
 
   async function handleCourseSubmit() {
     if (!student || !courseInfo || !courseCanProceed) return
@@ -383,7 +384,9 @@ function SummerScheduleInner() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">生徒名</span><span className="text-sm font-bold text-gray-800">{student.full_name}</span></div>
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span></div>
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">必要時間数</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span></div>
+            {!courseIsUnlimited && (
+              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">必要時間数</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span></div>
+            )}
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">合計時間数</span><span className="text-sm font-bold text-blue-600">{courseSelectedHours}H</span></div>
           </div>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -432,25 +435,37 @@ function SummerScheduleInner() {
               <span className="text-sm text-gray-500">選択中のコース</span>
               <span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span>
             </div>
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-              <span className="text-sm text-gray-500">必要時間数</span>
-              <span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span>
-            </div>
-            <div className="mt-3">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-sm text-gray-500">選択済み</span>
-                <span className={`text-base font-bold ${courseSelectedHours >= courseRequiredHours ? 'text-green-600' : 'text-blue-600'}`}>{courseSelectedHours}H／{courseRequiredHours}H</span>
+            {courseIsUnlimited ? (
+              <div className="mt-3 pt-3 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-500">選択済み</span>
+                  <span className="text-base font-bold text-blue-600">{courseSelectedHours}H</span>
+                </div>
+                <div className="text-xs text-gray-400 mt-1.5">何時間でも受講OK！ 1コマ以上選べば確認画面に進めます。</div>
               </div>
-              <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
-                <div className={`h-full rounded-full transition-all ${courseSelectedHours >= courseRequiredHours ? 'bg-green-500' : 'bg-blue-500'}`}
-                  style={{ width: `${Math.min(100, (courseSelectedHours / courseRequiredHours) * 100)}%` }} />
-              </div>
-              {courseSelectedHours < courseRequiredHours
-                ? <div className="text-xs text-gray-400 mt-1.5">{courseSelectedHours}H 選択中です</div>
-                : courseSelectedHours === courseRequiredHours
-                  ? <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>
-                  : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数を {courseSelectedHours - courseRequiredHours}H 超えています（このまま進めます）。</div>}
-            </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                  <span className="text-sm text-gray-500">必要時間数</span>
+                  <span className="text-sm font-bold text-gray-800">{courseRequiredHours}H</span>
+                </div>
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-gray-500">選択済み</span>
+                    <span className={`text-base font-bold ${courseSelectedHours >= courseRequiredHours ? 'text-green-600' : 'text-blue-600'}`}>{courseSelectedHours}H／{courseRequiredHours}H</span>
+                  </div>
+                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full transition-all ${courseSelectedHours >= courseRequiredHours ? 'bg-green-500' : 'bg-blue-500'}`}
+                      style={{ width: `${Math.min(100, (courseSelectedHours / courseRequiredHours) * 100)}%` }} />
+                  </div>
+                  {courseSelectedHours < courseRequiredHours
+                    ? <div className="text-xs text-gray-400 mt-1.5">{courseSelectedHours}H 選択中です</div>
+                    : courseSelectedHours === courseRequiredHours
+                      ? <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数に達しました。確認画面に進めます。</div>
+                      : <div className="text-xs text-green-600 mt-1.5 font-medium">必要時間数を {courseSelectedHours - courseRequiredHours}H 超えています（このまま進めます）。</div>}
+                </div>
+              </>
+            )}
           </div>
         )}
 

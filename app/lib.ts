@@ -44,11 +44,13 @@ export type SummerLesson = {
   course_name?: string | null
 }
 
+export type CourseCategory = '小学生' | '中学生' | '在塾生'
+
 export type SummerCourseApplication = {
   id: string
   student_id: string
   full_name: string
-  course_category: '小学生' | '中学生'
+  course_category: CourseCategory
   course_name: string
   required_hours: number
   total_hours: number
@@ -66,6 +68,7 @@ export type SummerCourse = {
   example: string
   target: string       // こんな人向け
   popular?: boolean
+  unlimited?: boolean  // trueの場合、必要時間数の制限なし（何時間でも受講OK）
 }
 
 // 小学生：1日1時間〜2時間
@@ -86,6 +89,11 @@ export const JUNIOR_COURSES: SummerCourse[] = [
   { id: 'j-shuchu',     name: '苦手克服集中コース',       hours: 30, example: '10日 × 3h', target: '集中して苦手を一気に解消したい' },
   { id: 'j-jitsuryoku', name: '実力アップしっかりコース', hours: 30, example: '15日 × 3h', target: '複数教科を受験・テストに向けて仕上げたい', popular: true },
   { id: 'j-free',       name: 'フリーコース',             hours: 60, example: '20日 × 3h', target: '通い放題の2か月で、夏休みを全力で大きく伸ばしたい' },
+]
+
+// 在塾生：時間数の制限なし
+export const RESIDENT_COURSES: SummerCourse[] = [
+  { id: 'r-free', name: 'フリーコース', hours: 0, example: '', target: '何時間でも受講OK！', unlimited: true },
 ]
 
 export type SummerAbsence = {
@@ -138,10 +146,11 @@ export function clearSession() {
 
 // コース申込みフロー：コース選択画面 → 日程選択（/parent/schedule）へ受け渡す選択中コース
 export type SelectedCourse = {
-  category: '小学生' | '中学生'
+  category: CourseCategory
   id: string
   name: string
   hours: number
+  unlimited?: boolean
 }
 
 const SELECTED_COURSE_KEY = 'summer_selected_course'
