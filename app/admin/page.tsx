@@ -63,6 +63,9 @@ export default function SummerAdminPage() {
 
   const [selectedCell, setSelectedCell] = useState<{ date: string; slot: string } | null>(null)
   const [printStudentId, setPrintStudentId] = useState<string>('')
+  const [bulkSelected, setBulkSelected] = useState<Set<string>>(new Set())
+  const [bulkConfirm, setBulkConfirm] = useState(false)
+  const [bulkCancelling, setBulkCancelling] = useState(false)
 
   useEffect(() => { fetchAll() }, [])
 
@@ -100,6 +103,35 @@ export default function SummerAdminPage() {
     lessons.forEach(l => { if (!m.has(l.student_id)) m.set(l.student_id, { id: l.student_id, name: l.full_name, site: l.site }) })
     return Array.from(m.values()).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0)
   }, [lessons])
+
+  // 一括キャンセル用：選択中の生徒の日程一覧
+  const bulkLessons = useMemo(() => {
+    if (!printStudentId) return []
+    return lessons.filter(l => l.student_id === printStudentId)
+      .sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
+  }, [lessons, printStudentId])
+
+  function toggleBulkLesson(id: string) {
+    setBulkSelected(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
+  }
+
+  function selectAllBulk() {
+    setBulkSelected(new Set(bulkLessons.map(l => l.id)))
+  }
+
+  async function cancelBulkSelected() {
+    if (bulkSelected.size === 0) return
+    setBulkCancelling(true)
+    const supabase = createClient()
+    const ids1 = bulkLessons.filter(l => bulkSelected.has(l.id) && l.site === '①').map(l => l.id)
+    const ids2 = bulkLessons.filter(l => bulkSelected.has(l.id) && l.site === '②').map(l => l.id)
+    if (ids1.length) await supabase.from('summer_lessons').delete().in('id', ids1)
+    if (ids2.length) await supabase.from('summer_lessons2').delete().in('id', ids2)
+    setBulkCancelling(false)
+    setBulkConfirm(false)
+    setBulkSelected(new Set())
+    await fetchAll()
+  }
 
   const lessonsAt  = (date: string, slot: string) => lessons.filter(l => l.date === date && l.start_time === slot)
   const absencesAt = (date: string, slot: string) => absences.filter(a => a.date === date && a.time === slot)
@@ -490,7 +522,7 @@ export default function SummerAdminPage() {
       {/* 生徒別カレンダー印刷 */}
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center gap-2 flex-wrap">
         <span className="text-xs font-semibold text-gray-500">生徒別カレンダー</span>
-        <select value={printStudentId} onChange={e => setPrintStudentId(e.target.value)}
+        <select value={printStudentId} onChange={e => { setPrintStudentId(e.target.value); setBulkSelected(new Set()) }}
           className="flex-1 min-w-[160px] max-w-xs text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700">
           <option value="">生徒を選択…</option>
           {students.map(s => (
@@ -508,6 +540,38 @@ export default function SummerAdminPage() {
           🖨 夏期講習カレンダー（全員分）
         </button>
       </div>
+
+      {/* 生徒の日程を一括キャンセル */}
+      {printStudentId && (
+        <div className="bg-white border-b border-gray-100 px-4 py-3">
+          <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
+            <span className="text-sm font-semibold text-gray-700">
+              {students.find(s => s.id === printStudentId)?.name} さんの日程（{bulkLessons.length}件）
+            </span>
+            <div className="flex gap-3">
+              <button onClick={selectAllBulk} className="text-xs text-blue-600 font-medium">全て選択</button>
+              <button onClick={() => setBulkSelected(new Set())} className="text-xs text-gray-400 font-medium">選択解除</button>
+            </div>
+          </div>
+          <div className="max-h-64 overflow-y-auto divide-y divide-gray-50 border border-gray-100 rounded-xl">
+            {bulkLessons.length === 0 ? (
+              <div className="text-center text-gray-400 text-sm py-6">日程がありません</div>
+            ) : bulkLessons.map(l => (
+              <label key={l.id} className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-gray-50">
+                <input type="checkbox" checked={bulkSelected.has(l.id)} onChange={() => toggleBulkLesson(l.id)}
+                  className="w-4 h-4 accent-red-500 flex-shrink-0" />
+                <span className="text-gray-500 w-20 flex-shrink-0">{new Date(l.date + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</span>
+                <span className="font-medium text-gray-800">{l.start_time}〜{l.end_time}</span>
+                <span className="text-xs text-gray-400 ml-auto flex-shrink-0">{l.site}</span>
+              </label>
+            ))}
+          </div>
+          <button onClick={() => setBulkConfirm(true)} disabled={bulkSelected.size === 0}
+            className="mt-2 w-full bg-red-50 text-red-600 border-2 border-red-200 font-bold py-2.5 rounded-xl text-sm disabled:opacity-40 active:bg-red-100 transition-colors">
+            選択した日程をまとめてキャンセル（{bulkSelected.size}件）
+          </button>
+        </div>
+      )}
 
       <main className="px-3 py-4 max-w-5xl mx-auto">
         {loading ? (
@@ -707,6 +771,30 @@ export default function SummerAdminPage() {
           </>
         )}
       </main>
+
+      {bulkConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="p-5 space-y-4">
+              <h2 className="text-base font-bold text-gray-800">日程をまとめてキャンセルしますか？</h2>
+              <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700 font-medium text-center">
+                {students.find(s => s.id === printStudentId)?.name} さんの選択した{bulkSelected.size}件をキャンセルします。<br />
+                <span className="text-xs font-normal text-red-500">この操作は取り消せません</span>
+              </div>
+              <div className="space-y-2">
+                <button onClick={cancelBulkSelected} disabled={bulkCancelling}
+                  className="w-full bg-red-500 text-white py-3 rounded-xl text-sm font-bold active:bg-red-600 disabled:opacity-50">
+                  {bulkCancelling ? 'キャンセル中...' : `はい、${bulkSelected.size}件キャンセルします`}
+                </button>
+                <button onClick={() => setBulkConfirm(false)} disabled={bulkCancelling}
+                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200 disabled:opacity-50">
+                  やめる
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
