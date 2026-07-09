@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
-import { getSession, toDateStr, SUMMER_START, SUMMER_END, type SummerLesson, type SummerAbsence, type SummerStudent } from '../../lib'
+import { getSession, toDateStr, SUMMER_START, SUMMER_END, cleanupEmptyApplications, type SummerLesson, type SummerAbsence, type SummerStudent } from '../../lib'
 import GuideBox from '../../components/GuideBox'
 
 type CalView = 'month' | 'week' | 'day'
@@ -75,7 +75,9 @@ export default function SummerCalendarPage() {
     if (!student) return
     setCancelling(true)
     const supabase = createClient()
+    const target = lessons.find(l => l.id === id)
     await supabase.from('summer_lessons').delete().eq('id', id)
+    if (target?.application_id) await cleanupEmptyApplications(supabase, [target.application_id])
     setCancelModal(null)
     setCancelConfirm(false)
     setCancelling(false)

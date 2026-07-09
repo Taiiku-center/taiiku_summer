@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
-import { TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, type SummerLesson, type SummerAbsence, type SummerNotification } from '../lib'
+import { TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, cleanupEmptyApplications, type SummerLesson, type SummerAbsence, type SummerNotification } from '../lib'
 
 type AdminView = 'month' | 'week' | 'day'
 type LessonRow = SummerLesson & { site: '①' | '②' }
@@ -145,12 +145,15 @@ export default function SummerAdminPage() {
     if (bulkTotalSelected === 0) return
     setBulkCancelling(true)
     const supabase = createClient()
-    const ids1 = bulkLessons.filter(l => bulkSelectedLessons.has(l.id) && l.site === '①').map(l => l.id)
+    const deletedSite1 = bulkLessons.filter(l => bulkSelectedLessons.has(l.id) && l.site === '①')
+    const ids1 = deletedSite1.map(l => l.id)
     const ids2 = bulkLessons.filter(l => bulkSelectedLessons.has(l.id) && l.site === '②').map(l => l.id)
     const absIds = Array.from(bulkSelectedAbsences)
     if (ids1.length) await supabase.from('summer_lessons').delete().in('id', ids1)
     if (ids2.length) await supabase.from('summer_lessons2').delete().in('id', ids2)
     if (absIds.length) await supabase.from('summer_absences').delete().in('id', absIds)
+    // 授業が0件になったコース申込みを連動して削除
+    await cleanupEmptyApplications(supabase, deletedSite1.map(l => l.application_id))
     setBulkCancelling(false)
     setBulkConfirm(false)
     clearBulkSelection()

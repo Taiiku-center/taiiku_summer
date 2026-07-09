@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
-import { endTime, type SummerCourseApplication, type SummerLesson, type CourseCategory } from '../../lib'
+import { endTime, cleanupEmptyApplications, type SummerCourseApplication, type SummerLesson, type CourseCategory } from '../../lib'
 
 const CAT_BADGE: Record<CourseCategory, string> = {
   '小学生': 'bg-emerald-500',
@@ -37,8 +37,19 @@ export default function SummerAdminApplicationsPage() {
       supabase.from('summer_course_applications').select('*').order('created_at', { ascending: false }),
       supabase.from('summer_lessons').select('*').not('application_id', 'is', null).neq('status', 'cancelled'),
     ])
-    setApps(a.data || [])
-    setLessons(l.data || [])
+    const allApps = a.data || []
+    const allLessons = l.data || []
+
+    // 授業が0件になった申込み（キャンセル等で孤立したもの）を自動整理
+    const lessonAppIds = new Set(allLessons.map(x => x.application_id))
+    const orphanIds = allApps.filter(app => !lessonAppIds.has(app.id)).map(app => app.id)
+    if (orphanIds.length > 0) {
+      await cleanupEmptyApplications(supabase, orphanIds)
+      setApps(allApps.filter(app => !orphanIds.includes(app.id)))
+    } else {
+      setApps(allApps)
+    }
+    setLessons(allLessons)
     setLoading(false)
   }
 

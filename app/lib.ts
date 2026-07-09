@@ -209,3 +209,21 @@ export function findRecommendedCourse(
     .sort((a, b) => b.hours - a.hours)
   return candidates.find(c => c.hours <= totalHours) || null
 }
+
+// 授業（summer_lessons）を削除した後、紐づく summer_course_applications の授業が
+// 0件になっていれば、その申込みレコードもあわせて削除する（一覧に0コマのまま残らないように）。
+// supabase はブラウザクライアント（createClient() の戻り値）を渡す。
+export async function cleanupEmptyApplications(
+  supabase: { from: (table: string) => any },
+  applicationIds: (string | null | undefined)[]
+) {
+  const ids = Array.from(new Set(applicationIds.filter((id): id is string => !!id)))
+  for (const appId of ids) {
+    const { count } = await supabase.from('summer_lessons')
+      .select('id', { count: 'exact', head: true })
+      .eq('application_id', appId).neq('status', 'cancelled')
+    if (!count) {
+      await supabase.from('summer_course_applications').delete().eq('id', appId)
+    }
+  }
+}

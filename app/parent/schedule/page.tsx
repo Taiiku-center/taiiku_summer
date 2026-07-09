@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import {
   getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END,
-  getSelectedCourse, clearSelectedCourse, lessonMinutes, formatHM, findRecommendedCourse,
+  getSelectedCourse, clearSelectedCourse, lessonMinutes, formatHM, findRecommendedCourse, cleanupEmptyApplications,
   type SummerLesson, type SummerStudent, type SelectedCourse,
 } from '../../lib'
 import GuideBox from '../../components/GuideBox'
@@ -120,10 +120,12 @@ function SummerScheduleInner() {
 
   async function cancelLesson(id: string) {
     const supabase = createClient()
+    const target = existing.find(l => l.id === id)
     setExisting(prev => prev.filter(l => l.id !== id))
     setCancelModal(null)
     setCancelConfirm(false)
     await supabase.from('summer_lessons').delete().eq('id', id)
+    if (target?.application_id) await cleanupEmptyApplications(supabase, [target.application_id])
     setMsg('キャンセルしました。新しい日時を選んで申込みできます')
     setMsgIsError(false)
     setTimeout(() => setMsg(''), 5000)
