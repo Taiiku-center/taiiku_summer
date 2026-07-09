@@ -154,6 +154,7 @@ export default function SummerAdminPage() {
     setBulkCancelling(false)
     setBulkConfirm(false)
     clearBulkSelection()
+    setPrintStudentId('')
     await fetchAll()
   }
 
