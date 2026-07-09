@@ -417,7 +417,7 @@ function SummerScheduleInner() {
       </header>
 
       <main className="max-w-4xl mx-auto px-3 py-4 space-y-4">
-        <GuideBox
+        <GuideBox alwaysOpen
           steps={[
             'カレンダーから希望日を選びます。',
             '表示された時間帯から、希望する授業時間を選びます。',

@@ -42,7 +42,7 @@ export default function SummerApplyCoursePage() {
       </header>
 
       <main className="px-4 py-5 max-w-2xl mx-auto space-y-4 pb-24">
-        <GuideBox
+        <GuideBox alwaysOpen
           steps={[
             '希望するコースを選びます。',
             '内容を確認して、次の日程選択へ進みます。',
