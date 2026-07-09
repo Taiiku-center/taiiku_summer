@@ -16,7 +16,7 @@ async function sendEmail(subject: string, body: string) {
   } catch {}
 }
 
-const SCREENS = ['ログイン画面', 'ホーム画面', '授業申込み画面', '欠席・遅刻連絡画面', '授業確認カレンダー', 'その他']
+const SCREENS = ['ログイン画面', 'ホーム画面', 'コース選択画面', '日程選択画面', '授業申込み画面', '欠席・遅刻連絡画面', '授業確認カレンダー', 'その他']
 
 export default function SummerBugReportPage() {
   const router = useRouter()
