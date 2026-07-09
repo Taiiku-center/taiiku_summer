@@ -1,9 +1,10 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '../../lib/supabase'
 import {
   getSession, ELEMENTARY_COURSES, JUNIOR_COURSES, RESIDENT_COURSES, setSelectedCourse,
-  type SummerStudent, type SummerCourse, type CourseCategory,
+  type SummerStudent, type SummerCourse, type CourseCategory, type SummerCourseApplication,
 } from '../../lib'
 import GuideBox from '../../components/GuideBox'
 
@@ -19,9 +20,18 @@ const CATEGORY_GROUPS: { cat: CourseCategory; list: SummerCourse[]; hint: string
   { cat: '在塾生', list: RESIDENT_COURSES,   hint: '時間数の制限なし' },
 ]
 
+function findCourse(category: CourseCategory, name: string): SummerCourse | null {
+  const group = CATEGORY_GROUPS.find(g => g.cat === category)
+  return group?.list.find(c => c.name === name) || null
+}
+
+type Mode = 'loading' | 'confirm' | 'select'
+
 export default function SummerApplyCoursePage() {
   const router = useRouter()
   const [student, setStudent]   = useState<SummerStudent | null>(null)
+  const [mode, setMode]         = useState<Mode>('loading')
+  const [existingApp, setExistingApp] = useState<SummerCourseApplication | null>(null)
   const [category, setCategory] = useState<CourseCategory | null>(null)
   const [course, setCourse]     = useState<SummerCourse | null>(null)
   const [openCat, setOpenCat]   = useState<CourseCategory | null>('小学生')
@@ -30,24 +40,98 @@ export default function SummerApplyCoursePage() {
     const s = getSession()
     if (!s) { router.replace('/login'); return }
     setStudent(s)
+    fetchLatestApplication(s.id)
   }, [router])
 
-  if (!student) return null
+  async function fetchLatestApplication(studentId: string) {
+    try {
+      const supabase = createClient()
+      const { data } = await supabase.from('summer_course_applications')
+        .select('*').eq('student_id', studentId).neq('status', 'cancelled')
+        .order('created_at', { ascending: false }).limit(1).maybeSingle()
+      if (data) { setExistingApp(data); setMode('confirm') }
+      else setMode('select')
+    } catch {
+      setMode('select')
+    }
+  }
+
+  if (!student || mode === 'loading') return null
 
   function selectCourse(cat: CourseCategory, c: SummerCourse) {
     setCategory(cat); setCourse(c)
   }
 
-  function goToSchedule() {
-    if (!course || !category) return
-    setSelectedCourse({ category, id: course.id, name: course.name, hours: course.hours, unlimited: course.unlimited })
+  function goToScheduleWith(cat: CourseCategory, c: SummerCourse) {
+    setSelectedCourse({ category: cat, id: c.id, name: c.name, hours: c.hours, unlimited: c.unlimited })
     router.push('/parent/schedule?course=1')
   }
 
+  function goToSchedule() {
+    if (!course || !category) return
+    goToScheduleWith(category, course)
+  }
+
+  function startChangeCourse() {
+    if (existingApp) {
+      const matched = findCourse(existingApp.course_category, existingApp.course_name)
+      if (matched) { setCategory(existingApp.course_category); setCourse(matched); setOpenCat(existingApp.course_category) }
+    }
+    setMode('select')
+  }
+
+  // ══ 既にコースを選んだことがある場合：現在のコースを表示 ══
+  if (mode === 'confirm' && existingApp) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-20">
+          <button onClick={() => router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
+          <div className="flex-1">
+            <h1 className="text-base font-bold text-gray-800">夏期講習の申込み</h1>
+            <p className="text-xs text-gray-400">{student.full_name} さん</p>
+          </div>
+        </header>
+
+        <main className="px-4 py-5 max-w-2xl mx-auto space-y-4">
+          <GuideBox alwaysOpen
+            steps={[
+              '現在選択中のコースで日程を選ぶか、コースを変更するか選びます。',
+              '「コースを変更する」を選ぶと、コース一覧から選び直せます。',
+            ]}
+            note="コースを間違えていた場合は「コースを変更する」からやり直せます。"
+          />
+
+          <div className={`rounded-2xl border-2 p-5 ${CATEGORY_COLOR[existingApp.course_category].border} bg-white`}>
+            <div className="flex items-center gap-2 mb-2">
+              <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${CATEGORY_COLOR[existingApp.course_category].badge}`}>{existingApp.course_category}コース</span>
+            </div>
+            <div className="text-sm text-gray-500">現在選択しているコース</div>
+            <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
+            {existingApp.required_hours > 0 && (
+              <div className="text-sm text-gray-500 mt-2">必要時間数：<span className="font-bold text-gray-800">{existingApp.required_hours}H</span></div>
+            )}
+          </div>
+
+          <button onClick={() => goToScheduleWith(existingApp.course_category, findCourse(existingApp.course_category, existingApp.course_name) || {
+            id: 'existing', name: existingApp.course_name, hours: existingApp.required_hours, example: '', target: '', unlimited: existingApp.required_hours === 0,
+          })}
+            className="w-full bg-blue-600 text-white font-bold text-base py-4 rounded-2xl active:bg-blue-700 transition-colors">
+            このコースで日程を選ぶ
+          </button>
+          <button onClick={startChangeCourse}
+            className="w-full border-2 border-gray-200 text-gray-600 font-bold text-base py-4 rounded-2xl active:bg-gray-50 transition-colors">
+            コースを変更する
+          </button>
+        </main>
+      </div>
+    )
+  }
+
+  // ══ コース選択（初回、または「コースを変更する」を選んだ場合） ══
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-20">
-        <button onClick={() => router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
+        <button onClick={() => existingApp ? setMode('confirm') : router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
         <div className="flex-1">
           <h1 className="text-base font-bold text-gray-800">夏期講習の申込み</h1>
           <p className="text-xs text-gray-400">{student.full_name} さん</p>
