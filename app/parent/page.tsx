@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getSession, clearSession, type SummerStudent } from '../lib'
-import GuideBox from '../components/GuideBox'
 
 export default function SummerParentPage() {
   const router = useRouter()
@@ -41,21 +40,6 @@ export default function SummerParentPage() {
           <div className="text-4xl mb-2">☀️</div>
           <h2 className="text-xl font-bold text-gray-800">2026年 夏期講習</h2>
           <p className="text-sm text-gray-400 mt-1">7月20日（月）〜 8月29日（土）</p>
-        </div>
-
-        <div className="mb-4">
-          <GuideBox
-            alwaysOpen
-            title="以下のメニューから、利用したい機能を選びます"
-            bullets={[
-              '夏期講習の授業を申込む',
-              '授業予定を確認する',
-              '欠席・遅刻を連絡する',
-              '欠席・遅刻の履歴を見る',
-              '不具合を報告する',
-            ]}
-            note="ログイン後、最初に表示される画面です。はじめての方はまず「夏期講習の授業を申込む」から、コース選びと日程の申込みができます。"
-          />
         </div>
 
         {/* コース申込み導線 */}
