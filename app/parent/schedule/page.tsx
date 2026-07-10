@@ -564,7 +564,7 @@ function SummerScheduleInner() {
           note="すでに申込み済みの時間は選べない場合があります。"
         />
         {isCourseMode && courseInfo && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-md p-4 sticky top-16 z-10">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">選択中のコース</span>
               <span className="text-sm font-bold text-gray-800">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span>
