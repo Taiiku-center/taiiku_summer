@@ -212,7 +212,7 @@ export default function SummerApplyCoursePage() {
                               ${sel ? `${color.border} ${color.dot}` : 'border-gray-300'}`}>
                               {sel && <span className="text-white text-xs font-bold">✓</span>}
                             </div>
-                            {!c.unlimited && <span className="font-bold text-gray-800 truncate">{c.name}</span>}
+                            <span className="font-bold text-gray-800 truncate">{c.unlimited ? c.target : c.name}</span>
                             {c.popular && <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full flex-shrink-0">人気</span>}
                             {recommendedForExisting?.id === c.id && (
                               <span className="text-[10px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full flex-shrink-0">こちらがおすすめ</span>
@@ -220,9 +220,11 @@ export default function SummerApplyCoursePage() {
                           </div>
                           {!c.unlimited && <span className={`text-lg font-bold flex-shrink-0 ${color.text}`}>{c.hours}H</span>}
                         </div>
-                        <div className={`text-sm mt-1.5 pl-8 ${c.unlimited ? 'font-bold text-gray-800' : 'text-gray-600'}`}>{c.unlimited ? c.target : `こんな人向け：${c.target}`}</div>
                         {!c.unlimited && (
-                          <div className="text-xs text-gray-400 mt-0.5 pl-8">受講時間：{c.hours}H（例：{c.example}）</div>
+                          <>
+                            <div className="text-sm text-gray-600 mt-1.5 pl-8">こんな人向け：{c.target}</div>
+                            <div className="text-xs text-gray-400 mt-0.5 pl-8">受講時間：{c.hours}H（例：{c.example}）</div>
+                          </>
                         )}
                       </button>
                     )
