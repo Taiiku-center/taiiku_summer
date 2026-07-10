@@ -200,8 +200,8 @@ export default function SummerAdminPage() {
     return days
   }
 
-  // ── Week ──
-  const weekDays = Array.from({ length: 7 }, (_, i) => {
+  // ── Week（日曜は授業がないため月〜土のみ） ──
+  const weekDays = Array.from({ length: 6 }, (_, i) => {
     const d = new Date(weekStart); d.setDate(d.getDate() + i); return d
   })
   const canPrevWeek = toDateStr(weekStart) > SUMMER_START
@@ -704,7 +704,7 @@ export default function SummerAdminPage() {
                 <div className="flex items-center justify-between mb-3">
                   <button onClick={prevWeek} disabled={!canPrevWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
                   <span className="text-sm font-bold text-gray-700">
-                    {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} 〜 {weekDays[6].getMonth()+1}/{weekDays[6].getDate()}
+                    {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} 〜 {weekDays[5].getMonth()+1}/{weekDays[5].getDate()}
                   </span>
                   <button onClick={nextWeek} disabled={!canNextWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
                 </div>
