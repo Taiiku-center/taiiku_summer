@@ -23,6 +23,10 @@ export default function SummerAdminStudentsPage() {
   const [addError, setAddError]       = useState('')
   const [adding, setAdding]           = useState(false)
 
+  const [deleteTarget, setDeleteTarget] = useState<SummerStudent | null>(null)
+  const [deleteError, setDeleteError]   = useState('')
+  const [deleting, setDeleting]         = useState(false)
+
   useEffect(() => { fetchStudents() }, [])
 
   async function fetchStudents() {
@@ -65,6 +69,22 @@ export default function SummerAdminStudentsPage() {
     fetchStudents()
   }
 
+  async function handleDelete() {
+    if (!deleteTarget) return
+    setDeleting(true)
+    setDeleteError('')
+    const supabase = createClient()
+    const { error } = await supabase.from('summer_students').delete().eq('id', deleteTarget.id)
+    setDeleting(false)
+    if (error) {
+      console.error('delete student failed:', error)
+      setDeleteError('削除に失敗しました。時間をおいて再度お試しください')
+      return
+    }
+    setDeleteTarget(null)
+    fetchStudents()
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
@@ -96,11 +116,19 @@ export default function SummerAdminStudentsPage() {
         ) : (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
             {students.map(s => (
-              <div key={s.id} className="flex items-center justify-between px-5 py-3.5">
-                <span className="font-medium text-gray-800">{s.full_name}</span>
-                <span className={`font-mono text-sm font-bold ${revealed ? 'text-gray-700' : 'text-gray-300 tracking-widest'}`}>
-                  {revealed ? s.four_digit_id : '••••'}
-                </span>
+              <div key={s.id} className="flex items-center justify-between px-5 py-3.5 gap-3">
+                <span className="font-medium text-gray-800 truncate">{s.full_name}</span>
+                <div className="flex items-center gap-3 flex-shrink-0">
+                  <span className={`font-mono text-sm font-bold ${revealed ? 'text-gray-700' : 'text-gray-300 tracking-widest'}`}>
+                    {revealed ? s.four_digit_id : '••••'}
+                  </span>
+                  {revealed && (
+                    <button onClick={() => { setDeleteTarget(s); setDeleteError('') }}
+                      className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1.5 rounded-lg active:bg-red-100">
+                      削除
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -166,6 +194,24 @@ export default function SummerAdminStudentsPage() {
                 className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-40">キャンセル</button>
               <button onClick={handleAdd} disabled={adding}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold active:bg-blue-700 disabled:opacity-40">{adding ? '追加中...' : '追加する'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+      {deleteTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="text-base font-bold text-gray-800 text-center">生徒を削除しますか？</h2>
+            <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700 font-medium text-center space-y-1">
+              <div>{deleteTarget.full_name}（{deleteTarget.four_digit_id}）</div>
+              <div className="text-xs font-normal text-red-500">この操作は取り消せません</div>
+            </div>
+            {deleteError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600 text-center font-medium">{deleteError}</div>}
+            <div className="flex gap-2">
+              <button onClick={() => { setDeleteTarget(null); setDeleteError('') }} disabled={deleting}
+                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-40">キャンセル</button>
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 bg-red-500 text-white py-3 rounded-xl text-sm font-bold active:bg-red-600 disabled:opacity-40">{deleting ? '削除中...' : 'はい、削除します'}</button>
             </div>
           </div>
         </div>
