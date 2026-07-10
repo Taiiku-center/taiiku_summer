@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import {
   getSession, clearSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, SLOT_CAPACITY,
-  getSelectedCourse, clearSelectedCourse, lessonMinutes, formatHM, findRecommendedCourse, cleanupEmptyApplications,
+  getSelectedCourse, setSelectedCourse, clearSelectedCourse, lessonMinutes, formatHM, findRecommendedCourse, cleanupEmptyApplications,
   type SummerLesson, type SummerStudent, type SelectedCourse,
 } from '../../lib'
 import GuideBox from '../../components/GuideBox'
@@ -235,6 +235,17 @@ function SummerScheduleInner() {
   // 表示用（互換のため時間表記も残す）
   const courseSelectedHours = courseSessionMinutes / 60
   const courseCanProceed = selected.size > 0
+
+  // 超過時に「おすすめコース」へその場で切り替える（選択済みの日程はそのまま維持）
+  function switchToRecommendedCourse() {
+    if (!courseRecommended || !courseInfo) return
+    const updated: SelectedCourse = {
+      category: courseInfo.category, id: courseRecommended.id, name: courseRecommended.name,
+      hours: courseRecommended.hours, unlimited: courseRecommended.unlimited, openEnded: courseRecommended.openEnded,
+    }
+    setSelectedCourse(updated)
+    setCourseInfo(updated)
+  }
 
   async function handleCourseSubmit() {
     if (!student || !courseInfo || !courseCanProceed) return
@@ -504,8 +515,12 @@ function SummerScheduleInner() {
             </div>
           )}
           {courseRecommended && (
-            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700">
-              <span className="font-bold">{courseRecommended.name}（{courseRecommended.hours}H）</span>がおすすめです。コースを変更したい場合はコース選択画面から変更できます。
+            <div className="bg-amber-50 border border-amber-200 rounded-2xl px-4 py-3 text-sm text-amber-700 space-y-2">
+              <div><span className="font-bold">{courseRecommended.name}（{courseRecommended.hours}H）</span>がおすすめです。</div>
+              <button onClick={switchToRecommendedCourse}
+                className="w-full bg-amber-500 text-white font-bold py-2.5 rounded-xl text-sm active:bg-amber-600">
+                {courseRecommended.name}に変更する
+              </button>
             </div>
           )}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -599,8 +614,12 @@ function SummerScheduleInner() {
                     <div className="text-xs text-gray-400 mt-1.5">複数回に分けて申込みできます。残り {formatHM(courseRequiredMinutes - courseTotalMinutes)} で予定のコース時間になります。</div>
                   )}
                   {courseRecommended && (
-                    <div className="mt-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700">
-                      <span className="font-bold">{courseRecommended.name}（{courseRecommended.hours}H）</span>がおすすめです。コースを変更したい場合はコース選択画面から変更できます。
+                    <div className="mt-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700 space-y-2">
+                      <div><span className="font-bold">{courseRecommended.name}（{courseRecommended.hours}H）</span>がおすすめです。</div>
+                      <button onClick={switchToRecommendedCourse}
+                        className="w-full bg-amber-500 text-white font-bold py-2 rounded-lg text-xs active:bg-amber-600">
+                        {courseRecommended.name}に変更する
+                      </button>
                     </div>
                   )}
                 </div>
