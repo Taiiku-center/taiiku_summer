@@ -220,7 +220,7 @@ export default function SummerApplyCoursePage() {
                           </div>
                           {!c.unlimited && <span className={`text-lg font-bold flex-shrink-0 ${color.text}`}>{c.hours}H</span>}
                         </div>
-                        <div className="text-sm text-gray-600 mt-1.5 pl-8">こんな人向け：{c.target}</div>
+                        <div className="text-sm text-gray-600 mt-1.5 pl-8">{c.unlimited ? c.target : `こんな人向け：${c.target}`}</div>
                         {!c.unlimited && (
                           <div className="text-xs text-gray-400 mt-0.5 pl-8">受講時間：{c.hours}H（例：{c.example}）</div>
                         )}
