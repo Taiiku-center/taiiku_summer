@@ -101,8 +101,9 @@ export default function SummerApplyCoursePage() {
   }
 
   const existingIsUnlimited = existingApp ? existingApp.required_hours === 0 : false
+  const existingIsOpenEnded = existingApp ? !!findCourse(existingApp.course_category, existingApp.course_name)?.openEnded : false
   const recommendedForExisting = existingApp
-    ? findRecommendedCourse(existingApp.course_category, { hours: existingApp.required_hours, unlimited: existingIsUnlimited }, appliedMinutes)
+    ? findRecommendedCourse(existingApp.course_category, { hours: existingApp.required_hours, unlimited: existingIsUnlimited || existingIsOpenEnded }, appliedMinutes)
     : null
 
   // ══ 既にコースを選んだことがある場合：現在のコースを表示 ══
@@ -133,7 +134,7 @@ export default function SummerApplyCoursePage() {
             <div className="text-sm text-gray-500">現在選択しているコース</div>
             <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
             {existingApp.required_hours > 0 && (
-              <div className="text-sm text-gray-500 mt-2">コースの合計時間：<span className="font-bold text-gray-800">{existingApp.required_hours}時間</span></div>
+              <div className="text-sm text-gray-500 mt-2">コースの合計時間：<span className="font-bold text-gray-800">{existingApp.required_hours}時間{findCourse(existingApp.course_category, existingApp.course_name)?.openEnded ? '〜' : ''}</span></div>
             )}
             <div className="text-sm text-gray-500 mt-1">これまでの合計時間：<span className="font-bold text-gray-800">{formatHM(appliedMinutes)}</span></div>
           </div>
