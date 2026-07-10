@@ -153,55 +153,6 @@ export default function SummerCalendarPage() {
     )
   }
 
-  function DayDetail({ ds }: { ds: string }) {
-    const sL = lessonsOn(ds), sA = absencesOn(ds)
-    if (sL.length === 0 && sA.length === 0) return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
-        この日は予定がありません
-      </div>
-    )
-    return (
-      <div className="space-y-3">
-        {sL.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-xs font-semibold text-blue-600">📅 授業申込み</div>
-              <div className="text-xs text-gray-400">タップでキャンセル</div>
-            </div>
-            <div className="space-y-2">
-              {sL.map(l => (
-                <button key={l.id} onClick={() => { setCancelModal(l); setCancelConfirm(false) }}
-                  className="w-full flex items-center justify-between bg-blue-50 hover:bg-blue-100 active:bg-blue-100 rounded-xl px-4 py-3 transition-colors text-left">
-                  <span className="text-sm font-medium text-blue-700">{l.start_time}〜{l.end_time}</span>
-                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium
-                    ${l.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-600'}`}>
-                    {l.status === 'confirmed' ? '確定' : '申込済'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-        {sA.length > 0 && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
-            <div className="text-xs font-semibold text-orange-600 mb-2">📢 欠席・遅刻連絡</div>
-            <div className="space-y-2">
-              {sA.map(a => (
-                <div key={a.id} className="bg-orange-50 rounded-xl px-4 py-3">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-orange-700">{a.type}（{a.time}〜）</span>
-                    <span className="text-xs text-orange-500">振替：{a.make_up_request}</span>
-                  </div>
-                  {a.note && <p className="text-xs text-orange-600">{a.note}</p>}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
-
   if (!student) return null
 
   return (
@@ -405,7 +356,6 @@ export default function SummerCalendarPage() {
                   </div>
                 </div>
               </div>
-              <DayDetail ds={selectedDate} />
             </>
           )}
         </>)}
