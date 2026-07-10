@@ -31,8 +31,9 @@ begin
   end loop;
 end $$;
 
--- summer_students: read-only (login lookup). No insert/update/delete anywhere in the app.
+-- summer_students: select + insert only (login lookup + admin "生徒追加"). No update/delete in the app.
 create policy "summer_students_select" on summer_students for select using (true);
+create policy "summer_students_insert" on summer_students for insert with check (true);
 
 -- summer_lessons: select/insert/delete only (booking + cancel). No update in the app.
 create policy "summer_lessons_select" on summer_lessons for select using (true);

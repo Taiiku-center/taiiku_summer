@@ -521,6 +521,7 @@ export default function SummerAdminPage() {
           { label: '📢 欠席・遅刻', href: '/admin/absences' },
           { label: '🔧 不具合', href: '/admin/bugs' },
           { label: '🔔 通知', href: '/admin/notifications' },
+          { label: '👤 生徒', href: '/admin/students' },
         ].map(l => (
           <button key={l.href} onClick={() => router.push(l.href)}
             className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-lg font-medium transition-colors
