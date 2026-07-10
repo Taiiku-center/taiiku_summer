@@ -329,7 +329,10 @@ function SummerScheduleInner() {
 
   function isBlocked(d: Date, slot: string) {
     const dow = d.getDay()
-    return (dow === 1 || dow === 4) && ['10:00', '10:30', '11:00', '11:30'].includes(slot)
+    if ((dow === 1 || dow === 4) && ['10:00', '10:30', '11:00', '11:30'].includes(slot)) return true
+    // 8/22は模擬試験のため、昼から（13:00〜）の授業なし
+    if (toDateStr(d) === '2026-08-22' && slot >= '13:00') return true
+    return false
   }
 
   function onCellPointerDown(e: React.PointerEvent, d: Date, slot: string) {
