@@ -456,7 +456,7 @@ function SummerScheduleInner() {
           <p className="text-sm text-gray-500 leading-relaxed">お申込みありがとうございます。<br />内容を確認のうえ、必要に応じて教室よりご連絡いたします。</p>
           {courseInfo && (
             <div className="bg-blue-50 rounded-2xl p-4 text-left text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-gray-500">コース</span><span className="font-bold text-blue-700">{courseInfo.category} {courseInfo.name}</span></div>
+              <div className="flex justify-between"><span className="text-gray-500">コース</span><span className="font-bold text-blue-700">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span></div>
               <div className="flex justify-between"><span className="text-gray-500">これまでの合計時間</span><span className="font-bold text-blue-700">{formatHM(courseTotalMinutes)}</span></div>
             </div>
           )}
@@ -485,7 +485,7 @@ function SummerScheduleInner() {
           <p className="text-sm text-gray-500">内容に間違いがないかご確認ください。</p>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">生徒名</span><span className="text-sm font-bold text-gray-800">{student.full_name}</span></div>
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span></div>
             {!courseIsUnlimited && (
               <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コースの合計時間</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span></div>
             )}
@@ -552,7 +552,7 @@ function SummerScheduleInner() {
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-gray-500">選択中のコース</span>
-              <span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span>
+              <span className="text-sm font-bold text-gray-800">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span>
             </div>
             {courseIsUnlimited ? (
               <div className="mt-3 pt-3 border-t border-gray-100">
