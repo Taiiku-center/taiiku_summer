@@ -93,7 +93,7 @@ export const JUNIOR_COURSES: SummerCourse[] = [
 
 // 在塾生：時間数の制限なし
 export const RESIDENT_COURSES: SummerCourse[] = [
-  { id: 'r-free', name: 'フリーコース', hours: 0, example: '', target: '何時間でも受講できます ※在塾生のみ', unlimited: true },
+  { id: 'r-free', name: 'フリーコース', hours: 0, example: '', target: '何時間でも受講できます ※在塾生', unlimited: true },
 ]
 
 export type SummerAbsence = {

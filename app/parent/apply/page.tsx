@@ -128,7 +128,7 @@ export default function SummerApplyCoursePage() {
 
           <div className={`rounded-2xl border-2 p-5 ${CATEGORY_COLOR[existingApp.course_category].border} bg-white`}>
             <div className="flex items-center gap-2 mb-2">
-              <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${CATEGORY_COLOR[existingApp.course_category].badge}`}>{existingApp.course_category}コース</span>
+              <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${CATEGORY_COLOR[existingApp.course_category].badge}`}>{existingApp.course_category}{existingApp.course_category === '在塾生' ? '' : 'コース'}</span>
             </div>
             <div className="text-sm text-gray-500">現在選択しているコース</div>
             <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
@@ -189,7 +189,7 @@ export default function SummerApplyCoursePage() {
               <button onClick={() => setOpenCat(open ? null : cat)}
                 className="w-full flex items-center justify-between px-4 py-3.5 text-left">
                 <div className="flex items-center gap-2">
-                  <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${color.badge}`}>{cat}コース</span>
+                  <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${color.badge}`}>{cat}{cat === '在塾生' ? '' : 'コース'}</span>
                   <span className="text-xs text-gray-400">{hint}</span>
                   {selCountInCat > 0 && (
                     <span className={`text-xs font-bold text-white ${color.badge} px-2 py-0.5 rounded-full`}>選択中</span>
