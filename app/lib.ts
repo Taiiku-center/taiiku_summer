@@ -69,6 +69,7 @@ export type SummerCourse = {
   target: string       // こんな人向け
   popular?: boolean
   unlimited?: boolean  // trueの場合、必要時間数の制限なし（何時間でも受講OK）
+  openEnded?: boolean  // trueの場合、hoursは最低時間数（〇H〜）。超過しても「超過」警告を出さない
 }
 
 // 小学生：1日1時間〜2時間
@@ -78,7 +79,7 @@ export const ELEMENTARY_COURSES: SummerCourse[] = [
   { id: 'e-standard',   name: '夏休み標準コース',         hours: 20, example: '20日 × 1h', target: '夏休み全体で着実に進めたい' },
   { id: 'e-shuchu',     name: '苦手克服集中コース',       hours: 20, example: '10日 × 2h', target: '短期間で集中して克服したい' },
   { id: 'e-jitsuryoku', name: '実力アップしっかりコース', hours: 30, example: '15日 × 2h', target: '複数の苦手をまとめて解消したい', popular: true },
-  { id: 'e-free',       name: 'フリーコース',             hours: 40, example: '20日 × 2h', target: '夏休みを全力で使い切りたい' },
+  { id: 'e-free',       name: 'フリーコース',             hours: 40, example: '20日 × 2h', target: '夏休みを全力で使い切りたい', openEnded: true },
 ]
 
 // 中学生：1日2時間〜3時間
@@ -88,7 +89,7 @@ export const JUNIOR_COURSES: SummerCourse[] = [
   { id: 'j-standard',   name: '夏休み標準コース',         hours: 40, example: '20日 × 2h', target: '定期テストに向けて準備したい' },
   { id: 'j-shuchu',     name: '苦手克服集中コース',       hours: 30, example: '10日 × 3h', target: '集中して苦手を一気に解消したい' },
   { id: 'j-jitsuryoku', name: '実力アップしっかりコース', hours: 30, example: '15日 × 3h', target: '複数教科を受験・テストに向けて仕上げたい', popular: true },
-  { id: 'j-free',       name: 'フリーコース',             hours: 60, example: '20日 × 3h', target: '通い放題の2か月で、夏休みを全力で大きく伸ばしたい' },
+  { id: 'j-free',       name: 'フリーコース',             hours: 60, example: '20日 × 3h', target: '通い放題の2か月で、夏休みを全力で大きく伸ばしたい', openEnded: true },
 ]
 
 // 在塾生：時間数の制限なし
@@ -151,6 +152,7 @@ export type SelectedCourse = {
   name: string
   hours: number
   unlimited?: boolean
+  openEnded?: boolean
 }
 
 const SELECTED_COURSE_KEY = 'summer_selected_course'

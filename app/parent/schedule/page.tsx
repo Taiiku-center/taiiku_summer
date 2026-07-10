@@ -211,6 +211,7 @@ function SummerScheduleInner() {
   }
 
   const courseIsUnlimited = !!courseInfo?.unlimited
+  const courseIsOpenEnded = !!courseInfo?.openEnded
   const courseRequiredHours = courseInfo?.hours ?? 0
   const courseRequiredMinutes = courseRequiredHours * 60
 
@@ -225,9 +226,9 @@ function SummerScheduleInner() {
     return sum + lessonMinutes(slot, endTime(slot))
   }, 0)
   const courseTotalMinutes = coursePreviousMinutes + courseSessionMinutes
-  const courseOverMinutes = courseIsUnlimited ? 0 : Math.max(0, courseTotalMinutes - courseRequiredMinutes)
-  const courseIsOver = !courseIsUnlimited && courseTotalMinutes > courseRequiredMinutes
-  const courseRecommended = (isCourseMode && courseInfo && !courseIsUnlimited)
+  const courseOverMinutes = (courseIsUnlimited || courseIsOpenEnded) ? 0 : Math.max(0, courseTotalMinutes - courseRequiredMinutes)
+  const courseIsOver = !courseIsUnlimited && !courseIsOpenEnded && courseTotalMinutes > courseRequiredMinutes
+  const courseRecommended = (isCourseMode && courseInfo && !courseIsUnlimited && !courseIsOpenEnded)
     ? findRecommendedCourse(courseInfo.category, { hours: courseRequiredHours, unlimited: false }, courseTotalMinutes)
     : null
 
@@ -486,7 +487,7 @@ function SummerScheduleInner() {
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">生徒名</span><span className="text-sm font-bold text-gray-800">{student.full_name}</span></div>
             <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.category} {courseInfo.name}</span></div>
             {!courseIsUnlimited && (
-              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コースの合計時間</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間</span></div>
+              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コースの合計時間</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span></div>
             )}
             {coursePreviousMinutes > 0 && (
               <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">申込み済み時間</span><span className="text-sm font-bold text-gray-800">{formatHM(coursePreviousMinutes)}</span></div>
@@ -568,13 +569,13 @@ function SummerScheduleInner() {
               <>
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
                   <span className="text-sm text-gray-500">コース時間</span>
-                  <span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間</span>
+                  <span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span>
                 </div>
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-500">選択中：合計</span>
                     <span className={`text-base font-bold ${courseIsOver ? 'text-red-600' : courseTotalMinutes >= courseRequiredMinutes ? 'text-green-600' : 'text-blue-600'}`}>
-                      {formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間
+                      {formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}
                     </span>
                   </div>
                   {coursePreviousMinutes > 0 && (
@@ -590,8 +591,10 @@ function SummerScheduleInner() {
                       <div className="text-xs text-red-500 mt-0.5">現在：{formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間</div>
                       <div className="text-xs text-red-500">超過：{formatHM(courseOverMinutes)}</div>
                     </div>
-                  ) : courseTotalMinutes === courseRequiredMinutes ? (
-                    <div className="text-xs text-green-600 mt-1.5 font-medium">コース時間ちょうどです。確認画面に進めます。</div>
+                  ) : courseTotalMinutes >= courseRequiredMinutes ? (
+                    <div className="text-xs text-green-600 mt-1.5 font-medium">
+                      {courseIsOpenEnded ? `${courseRequiredHours}時間を達成しました。さらに追加することもできます。` : 'コース時間ちょうどです。確認画面に進めます。'}
+                    </div>
                   ) : (
                     <div className="text-xs text-gray-400 mt-1.5">複数回に分けて申込みできます。残り {formatHM(courseRequiredMinutes - courseTotalMinutes)} で予定のコース時間になります。</div>
                   )}
