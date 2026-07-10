@@ -16,8 +16,8 @@ const CATEGORY_COLOR: Record<CourseCategory, { badge: string; border: string; ri
 }
 
 const CATEGORY_GROUPS: { cat: CourseCategory; list: SummerCourse[]; hint: string }[] = [
-  { cat: '小学生', list: ELEMENTARY_COURSES, hint: '1日1時間〜2時間' },
-  { cat: '中学生', list: JUNIOR_COURSES,     hint: '1日2時間〜3時間' },
+  { cat: '小学生', list: ELEMENTARY_COURSES, hint: '' },
+  { cat: '中学生', list: JUNIOR_COURSES,     hint: '' },
   { cat: '在塾生', list: RESIDENT_COURSES,   hint: '時間数の制限なし' },
 ]
 
