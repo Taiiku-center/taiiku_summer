@@ -366,7 +366,7 @@ export default function SummerCalendarPage() {
             </div>
           )}
 
-          {/* ══ 日ビュー ══ */}
+          {/* ══ 日ビュー（時間グリッド） ══ */}
           {calView === 'day' && (
             <>
               <div className="flex items-center justify-between">
@@ -377,6 +377,33 @@ export default function SummerCalendarPage() {
                 </span>
                 <button onClick={nextDay} disabled={!canNextDay}
                   className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 text-xl hover:bg-gray-200 active:scale-95 transition-all disabled:opacity-20">›</button>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                <div className="overflow-y-auto" style={{ maxHeight: '65vh' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '52px 1fr' }}>
+                    {TIME_SLOTS.map(slot => {
+                      const lesson = lessons.find(l => l.date === selectedDate && l.start_time === slot)
+                      const absence = absences.find(a => a.date === selectedDate && a.time === slot)
+                      return (
+                        <div key={slot} className="contents">
+                          <div className="border-b border-r border-gray-200 flex items-start justify-end pr-1.5 pt-1 text-[10px] text-gray-400 h-12 whitespace-nowrap bg-white">
+                            {slot}
+                          </div>
+                          <button
+                            disabled={!lesson}
+                            onClick={() => { if (lesson) { setCancelModal(lesson); setCancelConfirm(false) } }}
+                            className={`border-b border-gray-200 h-12 flex items-center px-3 text-xs font-bold transition-colors text-left
+                              ${lesson ? `${lesson.status === 'confirmed' ? 'bg-green-400 active:bg-green-300' : 'bg-blue-400 active:bg-blue-300'} text-white cursor-pointer` :
+                                absence ? 'bg-orange-100 text-orange-600' : ''}`}>
+                            {lesson && `${lesson.status === 'confirmed' ? '確定' : '申込済'}（${lesson.start_time}〜${lesson.end_time}）`}
+                            {!lesson && absence && `⚠ ${absence.type}連絡`}
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
               <DayDetail ds={selectedDate} />
             </>
