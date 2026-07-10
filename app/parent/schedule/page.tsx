@@ -3,7 +3,7 @@ import { Suspense, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import {
-  getSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, SLOT_CAPACITY,
+  getSession, clearSession, TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, SLOT_CAPACITY,
   getSelectedCourse, clearSelectedCourse, lessonMinutes, formatHM, findRecommendedCourse, cleanupEmptyApplications,
   type SummerLesson, type SummerStudent, type SelectedCourse,
 } from '../../lib'
@@ -193,6 +193,12 @@ function SummerScheduleInner() {
     }
     setSaving(false)
     if (error) {
+      console.error('lesson insert failed:', error)
+      if (error.code === '23503') {
+        clearSession()
+        router.replace('/login?expired=1')
+        return
+      }
       setMsg('申込みの送信に失敗しました。再度お試しください。')
       setMsgIsError(true)
       setTimeout(() => setMsg(''), 5000)
@@ -257,7 +263,13 @@ function SummerScheduleInner() {
       required_hours: courseRequiredHours, total_hours: courseSelectedHours, status: 'pending',
     }).select('id').single()
     if (appErr || !app) {
-      setCourseError(`申込みに失敗しました。${appErr?.message ? `（${appErr.message}）` : ''}`)
+      console.error('course application insert failed:', appErr)
+      if (appErr?.code === '23503') {
+        clearSession()
+        router.replace('/login?expired=1')
+        return
+      }
+      setCourseError('申込みに失敗しました。時間をおいて再度お試しください')
       setCourseSaving(false); return
     }
     const rows = Array.from(selected).map(k => {
@@ -270,8 +282,14 @@ function SummerScheduleInner() {
     })
     const { error: lessonErr } = await supabase.from('summer_lessons').insert(rows)
     if (lessonErr) {
+      console.error('course lesson insert failed:', lessonErr)
       await supabase.from('summer_course_applications').delete().eq('id', app.id)
-      setCourseError(`日程の登録に失敗しました。${lessonErr.message ? `（${lessonErr.message}）` : ''}`)
+      if (lessonErr.code === '23503') {
+        clearSession()
+        router.replace('/login?expired=1')
+        return
+      }
+      setCourseError('日程の登録に失敗しました。時間をおいて再度お試しください')
       setCourseSaving(false); return
     }
     await supabase.from('summer_notifications').insert({
@@ -521,7 +539,7 @@ function SummerScheduleInner() {
           steps={[
             'カレンダーから希望日を選びます。',
             '表示された時間帯から、希望する授業時間を選びます。',
-            '複数選べる場合は、必要な時間をすべて選びます。',
+            '希望する時間を全てをタップして選択してください。',
             '内容を確認し、「申込む」を押します。',
           ]}
           note="すでに申込み済みの時間は選べない場合があります。"
