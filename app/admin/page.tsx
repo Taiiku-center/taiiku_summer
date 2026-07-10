@@ -215,13 +215,11 @@ export default function SummerAdminPage() {
   function prevDay() {
     if (!canPrevDay) return
     const d = new Date(selectedDate + 'T00:00:00'); d.setDate(d.getDate() - 1)
-    if (d.getDay() === 0) d.setDate(d.getDate() - 1)
     setSelectedDate(toDateStr(clampToSummer(d)))
   }
   function nextDay() {
     if (!canNextDay) return
     const d = new Date(selectedDate + 'T00:00:00'); d.setDate(d.getDate() + 1)
-    if (d.getDay() === 0) d.setDate(d.getDate() + 1)
     setSelectedDate(toDateStr(clampToSummer(d)))
   }
 
