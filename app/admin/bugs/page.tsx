@@ -23,7 +23,8 @@ export default function SummerAdminBugsPage() {
 
   async function markRead(id: string) {
     const supabase = createClient()
-    await supabase.from('summer_bug_reports').update({ status: 'read' }).eq('id', id)
+    const { error } = await supabase.from('summer_bug_reports').update({ status: 'read' }).eq('id', id)
+    if (error) { console.error('mark read failed:', error); return }
     setReports(prev => prev.map(r => r.id === id ? { ...r, status: 'read' } : r))
   }
 

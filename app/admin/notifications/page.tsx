@@ -39,13 +39,15 @@ export default function SummerAdminNotificationsPage() {
 
   async function markRead(id: string) {
     const supabase = createClient()
-    await supabase.from('summer_notifications').update({ is_read: true }).eq('id', id)
+    const { error } = await supabase.from('summer_notifications').update({ is_read: true }).eq('id', id)
+    if (error) { console.error('mark read failed:', error); return }
     setNotifs(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
   }
 
   async function markAllRead() {
     const supabase = createClient()
-    await supabase.from('summer_notifications').update({ is_read: true }).eq('is_read', false)
+    const { error } = await supabase.from('summer_notifications').update({ is_read: true }).eq('is_read', false)
+    if (error) { console.error('mark all read failed:', error); return }
     setNotifs(prev => prev.map(n => ({ ...n, is_read: true })))
   }
 

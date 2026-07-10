@@ -67,6 +67,7 @@ export default function SummerAdminPage() {
   const [bulkSelectedAbsences, setBulkSelectedAbsences] = useState<Set<string>>(new Set())
   const [bulkConfirm, setBulkConfirm] = useState(false)
   const [bulkCancelling, setBulkCancelling] = useState(false)
+  const [actionError, setActionError] = useState('')
 
   useEffect(() => { fetchAll() }, [])
 
@@ -144,14 +145,25 @@ export default function SummerAdminPage() {
   async function cancelBulkSelected() {
     if (bulkTotalSelected === 0) return
     setBulkCancelling(true)
+    setActionError('')
     const supabase = createClient()
     const deletedSite1 = bulkLessons.filter(l => bulkSelectedLessons.has(l.id) && l.site === '①')
     const ids1 = deletedSite1.map(l => l.id)
     const ids2 = bulkLessons.filter(l => bulkSelectedLessons.has(l.id) && l.site === '②').map(l => l.id)
     const absIds = Array.from(bulkSelectedAbsences)
-    if (ids1.length) await supabase.from('summer_lessons').delete().in('id', ids1)
-    if (ids2.length) await supabase.from('summer_lessons2').delete().in('id', ids2)
-    if (absIds.length) await supabase.from('summer_absences').delete().in('id', absIds)
+    const results = await Promise.all([
+      ids1.length ? supabase.from('summer_lessons').delete().in('id', ids1) : null,
+      ids2.length ? supabase.from('summer_lessons2').delete().in('id', ids2) : null,
+      absIds.length ? supabase.from('summer_absences').delete().in('id', absIds) : null,
+    ])
+    const failed = results.find(r => r?.error)
+    if (failed?.error) {
+      console.error('bulk cancel failed:', failed.error)
+      setBulkCancelling(false)
+      setActionError('キャンセル処理に失敗しました。時間をおいて再度お試しください')
+      setTimeout(() => setActionError(''), 5000)
+      return
+    }
     // 授業が0件になったコース申込みを連動して削除
     await cleanupEmptyApplications(supabase, deletedSite1.map(l => l.application_id))
     setBulkCancelling(false)
@@ -847,6 +859,9 @@ export default function SummerAdminPage() {
                 {bulkSelectedAbsences.size > 0 && <div>・欠席・遅刻連絡　{bulkSelectedAbsences.size}件</div>}
                 <div className="text-xs font-normal text-red-500 pt-1">この操作は取り消せません</div>
               </div>
+              {actionError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600 text-center font-medium">{actionError}</div>
+              )}
               <div className="space-y-2">
                 <button onClick={cancelBulkSelected} disabled={bulkCancelling}
                   className="w-full bg-red-500 text-white py-3 rounded-xl text-sm font-bold active:bg-red-600 disabled:opacity-50">
