@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { endTime, cleanupEmptyApplications, type SummerCourseApplication, type SummerLesson, type CourseCategory } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 const CAT_BADGE: Record<CourseCategory, string> = {
   '小学生': 'bg-emerald-500',
@@ -70,6 +71,12 @@ export default function SummerAdminApplicationsPage() {
       </header>
 
       <main className="px-4 py-4 max-w-3xl mx-auto space-y-4">
+        <GuideBox
+          bullets={[
+            '小学生・中学生・在塾生の絞り込みでコース申込みを確認できます。',
+            'カードをタップすると、選択された日程の詳細が見られます。',
+          ]}
+        />
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: '申込み総数', count: apps.length, color: 'text-blue-600', bg: 'bg-blue-50' },

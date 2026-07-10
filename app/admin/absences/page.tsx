@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { type SummerAbsence } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 export default function SummerAdminAbsencesPage() {
   const router = useRouter()
@@ -37,6 +38,12 @@ export default function SummerAdminAbsencesPage() {
       </header>
 
       <main className="px-4 py-4 max-w-3xl mx-auto space-y-4">
+        <GuideBox
+          bullets={[
+            '欠席・遅刻でフィルターして絞り込めます。',
+            '各カードで振替希望の有無・連絡内容を確認できます。',
+          ]}
+        />
         <div className="grid grid-cols-3 gap-3">
           {[
             { label: '欠席', count: absences.filter(a => a.type === '欠席').length, color: 'text-red-500', bg: 'bg-red-50' },

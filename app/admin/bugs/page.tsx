@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { type SummerBugReport } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 export default function SummerAdminBugsPage() {
   const router = useRouter()
@@ -44,6 +45,12 @@ export default function SummerAdminBugsPage() {
       </header>
 
       <main className="px-4 py-4 max-w-3xl mx-auto space-y-3">
+        <GuideBox
+          bullets={[
+            '枠が赤い報告は未確認です。',
+            'カードをタップすると既読になります。',
+          ]}
+        />
         {loading ? (
           <div className="text-center text-gray-400 py-10">読み込み中...</div>
         ) : reports.length === 0 ? (

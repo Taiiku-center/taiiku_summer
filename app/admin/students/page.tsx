@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { type SummerStudent } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 const REVEAL_CODE = 'Taiiku7294'
 
@@ -100,6 +101,12 @@ export default function SummerAdminStudentsPage() {
       </header>
 
       <main className="px-4 py-4 max-w-3xl mx-auto space-y-4">
+        <GuideBox
+          bullets={[
+            '右上の「＋ 追加」で新しい生徒（4桁ID・氏名）を登録できます。',
+            '4桁IDは初期状態で隠れています。「🔒 4桁IDを表示する」でコードを入力すると表示され、削除ボタンも使えるようになります。',
+          ]}
+        />
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-500">{students.length}名</div>
           {!revealed && (

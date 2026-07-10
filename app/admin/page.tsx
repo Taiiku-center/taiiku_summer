@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../lib/supabase'
 import { TIME_SLOTS, endTime, toDateStr, SUMMER_START, SUMMER_END, cleanupEmptyApplications, type SummerLesson, type SummerAbsence, type SummerNotification } from '../lib'
+import GuideBox from '../components/GuideBox'
 
 type AdminView = 'month' | 'week' | 'day'
 type LessonRow = SummerLesson & { site: '①' | '②' }
@@ -652,6 +653,17 @@ export default function SummerAdminPage() {
       )}
 
       <main className="px-3 py-4 max-w-5xl mx-auto">
+        <div className="mb-4">
+          <GuideBox
+            bullets={[
+              '上部タブでカレンダー／コース申込み／欠席・遅刻／不具合／通知／生徒の各画面に切り替えます。',
+              '月・週・日の表示を切り替えて、授業予定を確認できます。',
+              '日付や時間帯のセルをタップすると、その枠の生徒を確認できます。',
+              'チェックボックスで生徒を選び、「まとめて削除」でキャンセル処理ができます。',
+              '🔔のマークは未読の通知件数です。',
+            ]}
+          />
+        </div>
         {loading ? (
           <div className="text-center text-gray-400 py-16">読み込み中...</div>
         ) : (

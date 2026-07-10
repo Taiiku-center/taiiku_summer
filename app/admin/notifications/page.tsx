@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import { type SummerNotification } from '../../lib'
+import GuideBox from '../../components/GuideBox'
 
 const TYPE_ICON: Record<string, string> = {
   lesson:  '📅',
@@ -70,6 +71,12 @@ export default function SummerAdminNotificationsPage() {
       </header>
 
       <main className="px-4 py-4 max-w-3xl mx-auto space-y-3">
+        <GuideBox
+          bullets={[
+            '新しい予約・欠席連絡・不具合報告が届くとここに表示されます。',
+            'タップで個別に既読、右上の「すべて既読」でまとめて既読にできます。',
+          ]}
+        />
         {unread > 0 && (
           <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 text-sm text-red-600 font-semibold text-center">
             🔔 未確認の通知が {unread} 件あります
