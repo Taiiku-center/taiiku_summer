@@ -310,7 +310,7 @@ function SummerScheduleInner() {
     })
     sendEmail(
       `【コース申込】${student.full_name} ${courseInfo.category} ${courseInfo.name}`,
-      `${student.full_name} さんが夏期講習を申し込みました。\nコース：${courseInfo.category} ${courseInfo.name}\n必要時間数：${courseRequiredHours}H\n日程：\n` +
+      `${student.full_name} さんが夏期講習を申し込みました。\nコース：${courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}\n必要時間数：${courseRequiredHours}H\n日程：\n` +
         rows.slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : a.start_time < b.start_time ? -1 : 1)
           .map(r => `・${r.date} ${r.start_time}〜${r.end_time}`).join('\n') + `\n合計：${courseSelectedHours}H\n管理画面でご確認ください。`,
     )
