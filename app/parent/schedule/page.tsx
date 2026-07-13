@@ -306,7 +306,7 @@ function SummerScheduleInner() {
     }
     await supabase.from('summer_notifications').insert({
       type: 'lesson', title: '夏期講習のコース申込みがありました',
-      message: `${student.full_name}（${courseInfo.category} ${courseInfo.name}／${courseRequiredHours}H）`, is_read: false,
+      message: `${student.full_name}（${courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}／${courseRequiredHours}H）`, is_read: false,
     })
     sendEmail(
       `【コース申込】${student.full_name} ${courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}`,

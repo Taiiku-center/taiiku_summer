@@ -132,7 +132,9 @@ export default function SummerApplyCoursePage() {
               <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${CATEGORY_COLOR[existingApp.course_category].badge}`}>{existingApp.course_category}</span>
             </div>
             <div className="text-sm text-gray-500">現在選択しているコース</div>
-            <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
+            {!existingIsUnlimited && (
+              <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
+            )}
             {existingApp.required_hours > 0 && (
               <div className="text-sm text-gray-500 mt-2">コースの合計時間：<span className="font-bold text-gray-800">{existingApp.required_hours}時間{findCourse(existingApp.course_category, existingApp.course_name)?.openEnded ? '〜' : ''}</span></div>
             )}
