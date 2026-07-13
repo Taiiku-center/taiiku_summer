@@ -27,6 +27,8 @@ export default function SummerAdminStudentsPage() {
   const [deleteTarget, setDeleteTarget] = useState<SummerStudent | null>(null)
   const [deleteError, setDeleteError]   = useState('')
   const [deleting, setDeleting]         = useState(false)
+  const [deleteCounts, setDeleteCounts] = useState<{ lessons: number; absences: number; applications: number } | null>(null)
+  const [countsLoading, setCountsLoading] = useState(false)
 
   useEffect(() => { fetchStudents() }, [])
 
@@ -70,12 +72,42 @@ export default function SummerAdminStudentsPage() {
     fetchStudents()
   }
 
+  async function openDeleteModal(s: SummerStudent) {
+    setDeleteTarget(s)
+    setDeleteError('')
+    setDeleteCounts(null)
+    setCountsLoading(true)
+    const supabase = createClient()
+    const [l1, l2, a, c] = await Promise.all([
+      supabase.from('summer_lessons').select('id', { count: 'exact', head: true }).eq('student_id', s.id),
+      supabase.from('summer_lessons2').select('id', { count: 'exact', head: true }).eq('student_id', s.id),
+      supabase.from('summer_absences').select('id', { count: 'exact', head: true }).eq('student_id', s.id),
+      supabase.from('summer_course_applications').select('id', { count: 'exact', head: true }).eq('student_id', s.id),
+    ])
+    setDeleteCounts({ lessons: (l1.count || 0) + (l2.count || 0), absences: a.count || 0, applications: c.count || 0 })
+    setCountsLoading(false)
+  }
+
   async function handleDelete() {
     if (!deleteTarget) return
     setDeleting(true)
     setDeleteError('')
     const supabase = createClient()
-    const { error } = await supabase.from('summer_students').delete().eq('id', deleteTarget.id)
+    const id = deleteTarget.id
+    const results = await Promise.all([
+      supabase.from('summer_lessons').delete().eq('student_id', id),
+      supabase.from('summer_lessons2').delete().eq('student_id', id),
+      supabase.from('summer_absences').delete().eq('student_id', id),
+      supabase.from('summer_course_applications').delete().eq('student_id', id),
+    ])
+    const relatedFailed = results.find(r => r.error)
+    if (relatedFailed?.error) {
+      console.error('delete related records failed:', relatedFailed.error)
+      setDeleting(false)
+      setDeleteError('関連データの削除に失敗しました。時間をおいて再度お試しください')
+      return
+    }
+    const { error } = await supabase.from('summer_students').delete().eq('id', id)
     setDeleting(false)
     if (error) {
       console.error('delete student failed:', error)
@@ -130,7 +162,7 @@ export default function SummerAdminStudentsPage() {
                     {revealed ? s.four_digit_id : '••••'}
                   </span>
                   {revealed && (
-                    <button onClick={() => { setDeleteTarget(s); setDeleteError('') }}
+                    <button onClick={() => openDeleteModal(s)}
                       className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1.5 rounded-lg active:bg-red-100">
                       削除
                     </button>
@@ -211,13 +243,23 @@ export default function SummerAdminStudentsPage() {
             <h2 className="text-base font-bold text-gray-800 text-center">生徒を削除しますか？</h2>
             <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700 font-medium text-center space-y-1">
               <div>{deleteTarget.full_name}（{deleteTarget.four_digit_id}）</div>
-              <div className="text-xs font-normal text-red-500">この操作は取り消せません</div>
+              {countsLoading ? (
+                <div className="text-xs font-normal text-red-500">関連データを確認中...</div>
+              ) : deleteCounts && (deleteCounts.lessons + deleteCounts.absences + deleteCounts.applications > 0) ? (
+                <div className="text-xs font-normal text-red-500 space-y-0.5 pt-1">
+                  {deleteCounts.lessons > 0 && <div>・授業予約　{deleteCounts.lessons}件</div>}
+                  {deleteCounts.absences > 0 && <div>・欠席・遅刻連絡　{deleteCounts.absences}件</div>}
+                  {deleteCounts.applications > 0 && <div>・コース申込み　{deleteCounts.applications}件</div>}
+                  <div className="pt-1">これらもすべて一緒に削除されます</div>
+                </div>
+              ) : null}
+              <div className="text-xs font-normal text-red-500 pt-1">この操作は取り消せません</div>
             </div>
             {deleteError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600 text-center font-medium">{deleteError}</div>}
             <div className="flex gap-2">
-              <button onClick={() => { setDeleteTarget(null); setDeleteError('') }} disabled={deleting}
+              <button onClick={() => { setDeleteTarget(null); setDeleteError(''); setDeleteCounts(null) }} disabled={deleting}
                 className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-40">キャンセル</button>
-              <button onClick={handleDelete} disabled={deleting}
+              <button onClick={handleDelete} disabled={deleting || countsLoading}
                 className="flex-1 bg-red-500 text-white py-3 rounded-xl text-sm font-bold active:bg-red-600 disabled:opacity-40">{deleting ? '削除中...' : 'はい、削除します'}</button>
             </div>
           </div>
