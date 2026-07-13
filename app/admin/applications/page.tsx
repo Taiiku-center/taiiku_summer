@@ -119,7 +119,7 @@ export default function SummerAdminApplicationsPage() {
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[app.status] || 'bg-gray-100 text-gray-500'}`}>{STATUS_LABEL[app.status] || app.status}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{app.course_name}</span>
+                  <span className="text-sm text-gray-600">{app.required_hours > 0 ? app.course_name : ''}</span>
                   <span className="text-sm font-bold text-blue-600">{app.required_hours > 0 ? `${app.total_hours}H／${app.required_hours}H` : `${app.total_hours}H（制限なし）`}</span>
                 </div>
                 <div className="text-xs text-gray-400 mt-1">日程 {ls.length}コマ　{open ? '▲ 閉じる' : '▼ 詳細を見る'}</div>
