@@ -48,7 +48,7 @@ export default function SummerAdminBugsPage() {
         <GuideBox
           bullets={[
             '枠が赤い報告は未確認です。',
-            'カードをタップすると既読になります。',
+            '「確認済みにする」を押すと既読になります。',
           ]}
         />
         {loading ? (
