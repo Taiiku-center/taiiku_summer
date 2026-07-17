@@ -2,13 +2,22 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
-import { endTime, cleanupEmptyApplications, type SummerCourseApplication, type SummerLesson, type CourseCategory } from '../../lib'
+import {
+  endTime, cleanupEmptyApplications, ELEMENTARY_COURSES, JUNIOR_COURSES, RESIDENT_COURSES,
+  type SummerCourseApplication, type SummerLesson, type CourseCategory, type SummerCourse,
+} from '../../lib'
 import GuideBox from '../../components/GuideBox'
 
 const CAT_BADGE: Record<CourseCategory, string> = {
   '小学生': 'bg-emerald-500',
   '中学生': 'bg-indigo-500',
   '在塾生': 'bg-amber-500',
+}
+
+const CATEGORY_COURSES: Record<CourseCategory, SummerCourse[]> = {
+  '小学生': ELEMENTARY_COURSES,
+  '中学生': JUNIOR_COURSES,
+  '在塾生': RESIDENT_COURSES,
 }
 
 const STATUS_LABEL: Record<string, string> = { pending: '申請済', confirmed: '確定', cancelled: '取消' }
@@ -29,6 +38,12 @@ export default function SummerAdminApplicationsPage() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter]   = useState<'all' | CourseCategory>('all')
   const [openId, setOpenId]   = useState<string | null>(null)
+
+  const [changeTarget, setChangeTarget] = useState<SummerCourseApplication | null>(null)
+  const [changeCategory, setChangeCategory] = useState<CourseCategory>('小学生')
+  const [changeCourseId, setChangeCourseId] = useState<string>('')
+  const [changeError, setChangeError] = useState('')
+  const [changing, setChanging] = useState(false)
 
   useEffect(() => { fetchAll() }, [])
 
@@ -52,6 +67,37 @@ export default function SummerAdminApplicationsPage() {
     }
     setLessons(allLessons)
     setLoading(false)
+  }
+
+  function openChangeModal(app: SummerCourseApplication) {
+    setChangeTarget(app)
+    setChangeCategory(app.course_category)
+    const current = CATEGORY_COURSES[app.course_category].find(c => c.name === app.course_name)
+    setChangeCourseId(current?.id || CATEGORY_COURSES[app.course_category][0]?.id || '')
+    setChangeError('')
+  }
+
+  async function handleChangeCourse() {
+    if (!changeTarget) return
+    const newCourse = CATEGORY_COURSES[changeCategory].find(c => c.id === changeCourseId)
+    if (!newCourse) { setChangeError('コースを選択してください'); return }
+    setChanging(true)
+    setChangeError('')
+    const supabase = createClient()
+    // total_hours（これまでの申込み時間）は変更せず引き継ぐ
+    const { error } = await supabase.from('summer_course_applications')
+      .update({ course_category: changeCategory, course_name: newCourse.name, required_hours: newCourse.hours })
+      .eq('id', changeTarget.id)
+    setChanging(false)
+    if (error) {
+      console.error('change course failed:', error)
+      setChangeError('変更に失敗しました。時間をおいて再度お試しください')
+      return
+    }
+    setChangeTarget(null)
+    setFilter(changeCategory)
+    setOpenId(changeTarget.id)
+    fetchAll()
   }
 
   const lessonsOf = (appId: string) => lessons
@@ -125,7 +171,7 @@ export default function SummerAdminApplicationsPage() {
                 <div className="text-xs text-gray-400 mt-1">日程 {ls.length}コマ　{open ? '▲ 閉じる' : '▼ 詳細を見る'}</div>
               </button>
               {open && (
-                <div className="border-t border-gray-100 bg-gray-50 px-5 py-3">
+                <div className="border-t border-gray-100 bg-gray-50 px-5 py-3 space-y-3">
                   {ls.length === 0 ? (
                     <div className="text-sm text-gray-400 py-2">紐付く日程が見つかりません</div>
                   ) : (
@@ -138,12 +184,57 @@ export default function SummerAdminApplicationsPage() {
                       ))}
                     </div>
                   )}
+                  <button onClick={() => openChangeModal(app)}
+                    className="w-full bg-white border border-blue-200 text-blue-600 font-bold py-2.5 rounded-xl text-sm active:bg-blue-50">
+                    コースを変更する
+                  </button>
                 </div>
               )}
             </div>
           )
         })}
       </main>
+
+      {changeTarget && (
+        <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
+            <h2 className="text-base font-bold text-gray-800">コースを変更</h2>
+            <div className="text-sm text-gray-500">{changeTarget.full_name} さん</div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">区分</label>
+              <div className="flex gap-2">
+                {(['小学生', '中学生', '在塾生'] as CourseCategory[]).map(cat => (
+                  <button key={cat} onClick={() => { setChangeCategory(cat); setChangeCourseId(CATEGORY_COURSES[cat][0]?.id || '') }}
+                    className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors
+                      ${changeCategory === cat ? `${CAT_BADGE[cat]} text-white` : 'bg-gray-100 text-gray-600'}`}>
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-500 mb-1.5">コース</label>
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {CATEGORY_COURSES[changeCategory].map(c => (
+                  <button key={c.id} onClick={() => setChangeCourseId(c.id)}
+                    className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-colors
+                      ${changeCourseId === c.id ? 'border-blue-500 bg-blue-50 font-bold text-blue-700' : 'border-gray-200 text-gray-600'}`}>
+                    {c.unlimited ? c.name : `${c.name}（${c.hours}H${c.openEnded ? '〜' : ''}）`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="text-xs text-gray-400">これまでの申込み時間（{changeTarget.total_hours}H）は引き継がれます。</div>
+            {changeError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600 text-center font-medium">{changeError}</div>}
+            <div className="flex gap-2">
+              <button onClick={() => setChangeTarget(null)} disabled={changing}
+                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-40">キャンセル</button>
+              <button onClick={handleChangeCourse} disabled={changing}
+                className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold active:bg-blue-700 disabled:opacity-40">{changing ? '変更中...' : '変更する'}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

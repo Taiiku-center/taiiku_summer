@@ -51,10 +51,11 @@ create policy "summer_absences_select" on summer_absences for select using (true
 create policy "summer_absences_insert" on summer_absences for insert with check (true);
 create policy "summer_absences_delete" on summer_absences for delete using (true);
 
--- summer_course_applications: select/insert/delete only. No update in the app.
+-- summer_course_applications: select/insert/delete/update (admin "コースを変更する").
 create policy "summer_course_applications_select" on summer_course_applications for select using (true);
 create policy "summer_course_applications_insert" on summer_course_applications for insert with check (true);
 create policy "summer_course_applications_delete" on summer_course_applications for delete using (true);
+create policy "summer_course_applications_update" on summer_course_applications for update using (true) with check (true);
 
 -- summer_bug_reports: select/insert/update only (admin marks status='read'). No delete in the app.
 create policy "summer_bug_reports_select" on summer_bug_reports for select using (true);
