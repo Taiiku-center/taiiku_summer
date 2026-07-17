@@ -219,7 +219,7 @@ export default function SummerAdminApplicationsPage() {
                   <button key={c.id} onClick={() => setChangeCourseId(c.id)}
                     className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-colors
                       ${changeCourseId === c.id ? 'border-blue-500 bg-blue-50 font-bold text-blue-700' : 'border-gray-200 text-gray-600'}`}>
-                    {c.unlimited ? c.name : `${c.name}（${c.hours}H${c.openEnded ? '〜' : ''}）`}
+                    {c.unlimited ? changeCategory : `${c.name}（${c.hours}H${c.openEnded ? '〜' : ''}）`}
                   </button>
                 ))}
               </div>
