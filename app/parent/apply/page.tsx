@@ -16,9 +16,9 @@ const CATEGORY_COLOR: Record<CourseCategory, { badge: string; border: string; ri
 }
 
 const CATEGORY_GROUPS: { cat: CourseCategory; list: SummerCourse[]; hint: string }[] = [
+  { cat: '在塾生', list: RESIDENT_COURSES,   hint: '時間数の制限なし' },
   { cat: '小学生', list: ELEMENTARY_COURSES, hint: '' },
   { cat: '中学生', list: JUNIOR_COURSES,     hint: '' },
-  { cat: '在塾生', list: RESIDENT_COURSES,   hint: '時間数の制限なし' },
 ]
 
 function findCourse(category: CourseCategory, name: string): SummerCourse | null {
@@ -36,7 +36,7 @@ export default function SummerApplyCoursePage() {
   const [appliedMinutes, setAppliedMinutes] = useState(0)
   const [category, setCategory] = useState<CourseCategory | null>(null)
   const [course, setCourse]     = useState<SummerCourse | null>(null)
-  const [openCat, setOpenCat]   = useState<CourseCategory | null>('小学生')
+  const [openCat, setOpenCat]   = useState<CourseCategory | null>('在塾生')
 
   useEffect(() => {
     const s = getSession()

@@ -40,7 +40,7 @@ export default function SummerAdminApplicationsPage() {
   const [openId, setOpenId]   = useState<string | null>(null)
 
   const [changeTarget, setChangeTarget] = useState<SummerCourseApplication | null>(null)
-  const [changeCategory, setChangeCategory] = useState<CourseCategory>('小学生')
+  const [changeCategory, setChangeCategory] = useState<CourseCategory>('在塾生')
   const [changeCourseId, setChangeCourseId] = useState<string>('')
   const [changeError, setChangeError] = useState('')
   const [changing, setChanging] = useState(false)
@@ -138,7 +138,7 @@ export default function SummerAdminApplicationsPage() {
         </div>
 
         <div className="flex gap-2">
-          {(['all', '小学生', '中学生', '在塾生'] as const).map(f => (
+          {(['all', '在塾生', '小学生', '中学生'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors
                 ${filter === f ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
@@ -203,7 +203,7 @@ export default function SummerAdminApplicationsPage() {
             <div>
               <label className="block text-xs font-semibold text-gray-500 mb-1.5">区分</label>
               <div className="flex gap-2">
-                {(['小学生', '中学生', '在塾生'] as CourseCategory[]).map(cat => (
+                {(['在塾生', '小学生', '中学生'] as CourseCategory[]).map(cat => (
                   <button key={cat} onClick={() => { setChangeCategory(cat); setChangeCourseId(CATEGORY_COURSES[cat][0]?.id || '') }}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors
                       ${changeCategory === cat ? `${CAT_BADGE[cat]} text-white` : 'bg-gray-100 text-gray-600'}`}>
