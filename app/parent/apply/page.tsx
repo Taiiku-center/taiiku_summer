@@ -111,10 +111,10 @@ export default function SummerApplyCoursePage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-20">
-          <button onClick={() => router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
+          <button onClick={() => router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-black text-xl transition-colors">‹</button>
           <div className="flex-1">
-            <h1 className="text-base font-bold text-gray-800">夏期講習の申込み</h1>
-            <p className="text-xs text-gray-400">{student.full_name} さん</p>
+            <h1 className="text-base font-bold text-black">夏期講習の申込み</h1>
+            <p className="text-xs text-black">{student.full_name} さん</p>
           </div>
         </header>
 
@@ -131,14 +131,14 @@ export default function SummerApplyCoursePage() {
             <div className="flex items-center gap-2 mb-2">
               <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${CATEGORY_COLOR[existingApp.course_category].badge}`}>{existingApp.course_category}</span>
             </div>
-            <div className="text-sm text-gray-500">現在選択しているコース</div>
+            <div className="text-sm text-black">現在選択しているコース</div>
             {!existingIsUnlimited && (
-              <div className="text-xl font-bold text-gray-800 mt-1">{existingApp.course_name}</div>
+              <div className="text-xl font-bold text-black mt-1">{existingApp.course_name}</div>
             )}
             {existingApp.required_hours > 0 && (
-              <div className="text-sm text-gray-500 mt-2">コースの合計時間：<span className="font-bold text-gray-800">{existingApp.required_hours}時間{findCourse(existingApp.course_category, existingApp.course_name)?.openEnded ? '〜' : ''}</span></div>
+              <div className="text-sm text-black mt-2">コースの合計時間：<span className="font-bold text-black">{existingApp.required_hours}時間{findCourse(existingApp.course_category, existingApp.course_name)?.openEnded ? '〜' : ''}</span></div>
             )}
-            <div className="text-sm text-gray-500 mt-1">これまでの合計時間：<span className="font-bold text-gray-800">{formatHM(appliedMinutes)}</span></div>
+            <div className="text-sm text-black mt-1">これまでの合計時間：<span className="font-bold text-black">{formatHM(appliedMinutes)}</span></div>
           </div>
 
           {recommendedForExisting && (
@@ -154,7 +154,7 @@ export default function SummerApplyCoursePage() {
             このコースで日程を選ぶ
           </button>
           <button onClick={startChangeCourse}
-            className="w-full border-2 border-gray-200 text-gray-600 font-bold text-base py-4 rounded-2xl active:bg-gray-50 transition-colors">
+            className="w-full border-2 border-gray-200 text-black font-bold text-base py-4 rounded-2xl active:bg-gray-50 transition-colors">
             コースを変更する
           </button>
         </main>
@@ -166,10 +166,10 @@ export default function SummerApplyCoursePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 sticky top-0 z-20">
-        <button onClick={() => existingApp ? setMode('confirm') : router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
+        <button onClick={() => existingApp ? setMode('confirm') : router.push('/parent')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-black text-xl transition-colors">‹</button>
         <div className="flex-1">
-          <h1 className="text-base font-bold text-gray-800">夏期講習の申込み</h1>
-          <p className="text-xs text-gray-400">{student.full_name} さん</p>
+          <h1 className="text-base font-bold text-black">夏期講習の申込み</h1>
+          <p className="text-xs text-black">{student.full_name} さん</p>
         </div>
       </header>
 
@@ -181,7 +181,7 @@ export default function SummerApplyCoursePage() {
           ]}
           note="コースを間違えた場合は、戻って選び直してください。"
         />
-        <h2 className="text-lg font-bold text-gray-800">コースを選択してください</h2>
+        <h2 className="text-lg font-bold text-black">コースを選択してください</h2>
 
         {CATEGORY_GROUPS.map(({ cat, list, hint }) => {
           const open = openCat === cat
@@ -193,12 +193,12 @@ export default function SummerApplyCoursePage() {
                 className="w-full flex items-center justify-between px-4 py-3.5 text-left">
                 <div className="flex items-center gap-2">
                   <span className={`text-xs font-bold text-white px-2.5 py-1 rounded-lg ${color.badge}`}>{cat}</span>
-                  <span className="text-xs text-gray-400">{hint}</span>
+                  <span className="text-xs text-black">{hint}</span>
                   {selCountInCat > 0 && (
                     <span className={`text-xs font-bold text-white ${color.badge} px-2 py-0.5 rounded-full`}>選択中</span>
                   )}
                 </div>
-                <span className={`text-gray-400 text-sm transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
+                <span className={`text-black text-sm transition-transform ${open ? 'rotate-180' : ''}`}>▼</span>
               </button>
 
               {open && (
@@ -215,7 +215,7 @@ export default function SummerApplyCoursePage() {
                               ${sel ? `${color.border} ${color.dot}` : 'border-gray-300'}`}>
                               {sel && <span className="text-white text-xs font-bold">✓</span>}
                             </div>
-                            <span className="font-bold text-gray-800 truncate">{c.unlimited ? c.target : c.name}</span>
+                            <span className="font-bold text-black truncate">{c.unlimited ? c.target : c.name}</span>
                             {c.popular && <span className="text-[10px] font-bold text-white bg-red-500 px-1.5 py-0.5 rounded-full flex-shrink-0">人気</span>}
                             {recommendedForExisting?.id === c.id && (
                               <span className="text-[10px] font-bold text-white bg-amber-500 px-1.5 py-0.5 rounded-full flex-shrink-0">こちらがおすすめ</span>
@@ -225,8 +225,8 @@ export default function SummerApplyCoursePage() {
                         </div>
                         {!c.unlimited && (
                           <>
-                            <div className="text-sm text-gray-600 mt-1.5 pl-8">こんな人向け：{c.target}</div>
-                            <div className="text-xs text-gray-400 mt-0.5 pl-8">受講時間：{c.hours}H{c.openEnded ? '〜' : ''}（例：{c.example}）</div>
+                            <div className="text-sm text-black mt-1.5 pl-8">こんな人向け：{c.target}</div>
+                            <div className="text-xs text-black mt-0.5 pl-8">受講時間：{c.hours}H{c.openEnded ? '〜' : ''}（例：{c.example}）</div>
                           </>
                         )}
                       </button>

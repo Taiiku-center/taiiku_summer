@@ -41,7 +41,7 @@ type CourseStep = 'schedule' | 'confirm' | 'done'
 
 export default function SummerSchedulePage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400">読み込み中...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-black">読み込み中...</div>}>
       <SummerScheduleInner />
     </Suspense>
   )
@@ -463,16 +463,16 @@ function SummerScheduleInner() {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
         <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm text-center space-y-4">
           <div className="text-5xl">🎉</div>
-          <h2 className="text-xl font-bold text-gray-800">夏期講習のお申込みを受け付けました</h2>
-          <p className="text-sm text-gray-500 leading-relaxed">お申込みありがとうございます。<br />内容を確認のうえ、必要に応じて教室よりご連絡いたします。</p>
+          <h2 className="text-xl font-bold text-black">夏期講習のお申込みを受け付けました</h2>
+          <p className="text-sm text-black leading-relaxed">お申込みありがとうございます。<br />内容を確認のうえ、必要に応じて教室よりご連絡いたします。</p>
           {courseInfo && (
             <div className="bg-blue-50 rounded-2xl p-4 text-left text-sm space-y-1">
-              <div className="flex justify-between"><span className="text-gray-500">コース</span><span className="font-bold text-blue-700">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">これまでの合計時間</span><span className="font-bold text-blue-700">{formatHM(courseTotalMinutes)}</span></div>
+              <div className="flex justify-between"><span className="text-black">コース</span><span className="font-bold text-blue-700">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span></div>
+              <div className="flex justify-between"><span className="text-black">これまでの合計時間</span><span className="font-bold text-blue-700">{formatHM(courseTotalMinutes)}</span></div>
             </div>
           )}
           <button onClick={() => router.push('/parent')} className="w-full bg-blue-600 text-white font-bold py-4 rounded-2xl active:bg-blue-700">ホームに戻る</button>
-          <button onClick={() => router.push('/parent/calendar')} className="w-full border-2 border-gray-200 text-gray-600 font-bold py-3 rounded-2xl text-sm">授業予定を確認する</button>
+          <button onClick={() => router.push('/parent/calendar')} className="w-full border-2 border-gray-200 text-black font-bold py-3 rounded-2xl text-sm">授業予定を確認する</button>
         </div>
       </div>
     )
@@ -488,23 +488,23 @@ function SummerScheduleInner() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
           <div className="px-4 py-3 flex items-center gap-3">
-            <button onClick={() => setCourseStep('schedule')} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
-            <h1 className="text-base font-bold text-gray-800">申込み内容を確認してください</h1>
+            <button onClick={() => setCourseStep('schedule')} className="bg-gray-100 text-black px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
+            <h1 className="text-base font-bold text-black">申込み内容を確認してください</h1>
           </div>
         </header>
         <main className="max-w-2xl mx-auto px-4 py-5 space-y-4">
-          <p className="text-sm text-gray-500">内容に間違いがないかご確認ください。</p>
+          <p className="text-sm text-black">内容に間違いがないかご確認ください。</p>
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-100">
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">生徒名</span><span className="text-sm font-bold text-gray-800">{student.full_name}</span></div>
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コース</span><span className="text-sm font-bold text-gray-800">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-black">生徒名</span><span className="text-sm font-bold text-black">{student.full_name}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-black">コース</span><span className="text-sm font-bold text-black">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span></div>
             {!courseIsUnlimited && (
-              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">コースの合計時間</span><span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span></div>
+              <div className="flex justify-between px-5 py-4"><span className="text-sm text-black">コースの合計時間</span><span className="text-sm font-bold text-black">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span></div>
             )}
             {coursePreviousMinutes > 0 && (
-              <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">申込み済み時間</span><span className="text-sm font-bold text-gray-800">{formatHM(coursePreviousMinutes)}</span></div>
+              <div className="flex justify-between px-5 py-4"><span className="text-sm text-black">申込み済み時間</span><span className="text-sm font-bold text-black">{formatHM(coursePreviousMinutes)}</span></div>
             )}
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">今回選択した時間</span><span className="text-sm font-bold text-gray-800">{formatHM(courseSessionMinutes)}</span></div>
-            <div className="flex justify-between px-5 py-4"><span className="text-sm text-gray-500">申込み後の合計時間</span><span className={`text-sm font-bold ${courseIsOver ? 'text-red-600' : 'text-blue-600'}`}>{formatHM(courseTotalMinutes)}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-black">今回選択した時間</span><span className="text-sm font-bold text-black">{formatHM(courseSessionMinutes)}</span></div>
+            <div className="flex justify-between px-5 py-4"><span className="text-sm text-black">申込み後の合計時間</span><span className={`text-sm font-bold ${courseIsOver ? 'text-red-600' : 'text-blue-600'}`}>{formatHM(courseTotalMinutes)}</span></div>
           </div>
 
           {courseIsOver && (
@@ -524,19 +524,19 @@ function SummerScheduleInner() {
             </div>
           )}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="px-5 py-3 border-b border-gray-100 text-sm font-semibold text-gray-600">選択した日程（{sortedSelected.length}コマ）</div>
+            <div className="px-5 py-3 border-b border-gray-100 text-sm font-semibold text-black">選択した日程（{sortedSelected.length}コマ）</div>
             <div className="divide-y divide-gray-50 max-h-80 overflow-y-auto">
               {sortedSelected.map(({ ds, slot }, i) => (
                 <div key={i} className="flex items-center justify-between px-5 py-3">
-                  <span className="text-sm text-gray-700">{new Date(ds + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' })}</span>
-                  <span className="text-sm font-medium text-gray-800">{slot}〜{endTime(slot)}</span>
+                  <span className="text-sm text-black">{new Date(ds + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' })}</span>
+                  <span className="text-sm font-medium text-black">{slot}〜{endTime(slot)}</span>
                 </div>
               ))}
             </div>
           </div>
           {courseError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-sm text-red-600 text-center">{courseError}</div>}
           <div className="flex gap-2">
-            <button onClick={() => setCourseStep('schedule')} disabled={courseSaving} className="flex-1 border-2 border-gray-200 text-gray-600 font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-gray-50">戻って修正する</button>
+            <button onClick={() => setCourseStep('schedule')} disabled={courseSaving} className="flex-1 border-2 border-gray-200 text-black font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-gray-50">戻って修正する</button>
             <button onClick={handleCourseSubmit} disabled={courseSaving} className="flex-1 bg-blue-600 text-white font-bold py-4 rounded-2xl disabled:opacity-40 active:bg-blue-700">{courseSaving ? '送信中...' : 'この内容で申込む'}</button>
           </div>
         </main>
@@ -548,8 +548,8 @@ function SummerScheduleInner() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="px-4 py-3 flex items-center gap-3">
-          <button onClick={() => router.push(isCourseMode ? '/parent/apply' : '/parent')} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
-          <h1 className="text-base font-bold text-gray-800">{isCourseMode ? '受講日程を選択してください' : '授業を申し込む'}</h1>
+          <button onClick={() => router.push(isCourseMode ? '/parent/apply' : '/parent')} className="bg-gray-100 text-black px-4 py-2 rounded-xl text-sm font-bold active:bg-gray-200">← 戻る</button>
+          <h1 className="text-base font-bold text-black">{isCourseMode ? '受講日程を選択してください' : '授業を申し込む'}</h1>
         </div>
       </header>
 
@@ -566,35 +566,35 @@ function SummerScheduleInner() {
         {isCourseMode && courseInfo && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-gray-500">選択中のコース</span>
-              <span className="text-sm font-bold text-gray-800">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span>
+              <span className="text-sm text-black">選択中のコース</span>
+              <span className="text-sm font-bold text-black">{courseInfo.unlimited ? courseInfo.category : `${courseInfo.category} ${courseInfo.name}`}</span>
             </div>
             {courseIsUnlimited ? (
               <div className="mt-3 pt-3 border-t border-gray-100">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-500">合計選択時間</span>
+                  <span className="text-sm text-black">合計選択時間</span>
                   <span className="text-base font-bold text-blue-600">{formatHM(courseTotalMinutes)}</span>
                 </div>
                 {coursePreviousMinutes > 0 && (
-                  <div className="text-xs text-gray-400 mt-1">申込み済み：{formatHM(coursePreviousMinutes)}　＋　今回選択中：{formatHM(courseSessionMinutes)}</div>
+                  <div className="text-xs text-black mt-1">申込み済み：{formatHM(coursePreviousMinutes)}　＋　今回選択中：{formatHM(courseSessionMinutes)}</div>
                 )}
-                <div className="text-xs text-gray-400 mt-1.5">何時間でも受講OK！ 1コマ以上選べば確認画面に進めます。</div>
+                <div className="text-xs text-black mt-1.5">何時間でも受講OK！ 1コマ以上選べば確認画面に進めます。</div>
               </div>
             ) : (
               <>
                 <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                  <span className="text-sm text-gray-500">コース時間</span>
-                  <span className="text-sm font-bold text-gray-800">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span>
+                  <span className="text-sm text-black">コース時間</span>
+                  <span className="text-sm font-bold text-black">{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}</span>
                 </div>
                 <div className="mt-3">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm text-gray-500">選択中：合計</span>
+                    <span className="text-sm text-black">選択中：合計</span>
                     <span className={`text-base font-bold ${courseIsOver ? 'text-red-600' : courseTotalMinutes >= courseRequiredMinutes ? 'text-green-600' : 'text-blue-600'}`}>
                       {formatHM(courseTotalMinutes)} ／ コース時間：{courseRequiredHours}時間{courseIsOpenEnded ? '〜' : ''}
                     </span>
                   </div>
                   {coursePreviousMinutes > 0 && (
-                    <div className="text-xs text-gray-400 mb-1.5">申込み済み：{formatHM(coursePreviousMinutes)}　＋　今回選択中：{formatHM(courseSessionMinutes)}</div>
+                    <div className="text-xs text-black mb-1.5">申込み済み：{formatHM(coursePreviousMinutes)}　＋　今回選択中：{formatHM(courseSessionMinutes)}</div>
                   )}
                   <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                     <div className={`h-full rounded-full transition-all ${courseIsOver ? 'bg-red-500' : courseTotalMinutes >= courseRequiredMinutes ? 'bg-green-500' : 'bg-blue-500'}`}
@@ -611,7 +611,7 @@ function SummerScheduleInner() {
                       {courseIsOpenEnded ? `${courseRequiredHours}時間を達成しました。さらに追加することもできます。` : 'コース時間ちょうどです。確認画面に進めます。'}
                     </div>
                   ) : (
-                    <div className="text-xs text-gray-400 mt-1.5">複数回に分けて申込みできます。残り {formatHM(courseRequiredMinutes - courseTotalMinutes)} で予定のコース時間になります。</div>
+                    <div className="text-xs text-black mt-1.5">複数回に分けて申込みできます。残り {formatHM(courseRequiredMinutes - courseTotalMinutes)} で予定のコース時間になります。</div>
                   )}
                   {courseRecommended && (
                     <div className="mt-2 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-700 space-y-2">
@@ -633,25 +633,25 @@ function SummerScheduleInner() {
             {(['month','week','day'] as View[]).map(v => (
               <button key={v} onClick={() => setView(v)}
                 className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors
-                  ${view === v ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-500'}`}>
+                  ${view === v ? 'bg-white text-blue-600 shadow-sm' : 'text-black'}`}>
                 {v === 'month' ? '月' : v === 'week' ? '週' : '日'}
               </button>
             ))}
           </div>
           <button onClick={navigatePrev} disabled={!canGoPrev()}
             className="bg-gray-100 px-3 py-2 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-30">←</button>
-          <div className="flex-1 text-center font-bold text-gray-800 text-sm">{displayTitle()}</div>
+          <div className="flex-1 text-center font-bold text-black text-sm">{displayTitle()}</div>
           <button onClick={navigateNext} disabled={!canGoNext()}
             className="bg-gray-100 px-3 py-2 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-30">→</button>
         </div>
 
         {view !== 'month' && (
           <div className="space-y-1.5">
-            <div className="flex items-center gap-4 text-xs text-gray-500 flex-wrap">
+            <div className="flex items-center gap-4 text-xs text-black flex-wrap">
               <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-blue-400 rounded" />選択中</div>
               <div className="flex items-center gap-1.5"><div className="w-4 h-4 bg-teal-400 rounded" />選択済（タップで変更・キャンセル）</div>
             </div>
-            <div className="text-xs text-gray-400">タップで1コマ選択 ／ 長押ししながらドラッグで複数選択</div>
+            <div className="text-xs text-black">タップで1コマ選択 ／ 長押ししながらドラッグで複数選択</div>
           </div>
         )}
 
@@ -678,14 +678,14 @@ function SummerScheduleInner() {
                     const inS = isInSummer(d)
                     return (
                       <div key={i} className={`border-b border-r border-gray-200 py-2 text-center text-xs font-bold leading-tight bg-white sticky top-0 z-10
-                        ${i===5?'text-blue-500':'text-gray-600'} ${!inS ? 'opacity-30' : ''}`}>
-                        {DAYS_JP[i]}<br/><span className="font-normal text-gray-400">{d.getMonth()+1}/{d.getDate()}</span>
+                        ${i===5?'text-blue-500':'text-black'} ${!inS ? 'opacity-30' : ''}`}>
+                        {DAYS_JP[i]}<br/><span className="font-normal text-black">{d.getMonth()+1}/{d.getDate()}</span>
                       </div>
                     )
                   })}
                   {TIME_SLOTS.map(slot => (
                     <div key={slot} className="contents">
-                      <div className="border-b border-r border-gray-200 flex items-center justify-end pr-1.5 text-xs text-gray-400 h-10 whitespace-nowrap bg-white sticky left-0 z-[5]">
+                      <div className="border-b border-r border-gray-200 flex items-center justify-end pr-1.5 text-xs text-black h-10 whitespace-nowrap bg-white sticky left-0 z-[5]">
                         {slot}
                       </div>
                       {wd.slice(0, 6).map((d, di) => {
@@ -738,7 +738,7 @@ function SummerScheduleInner() {
             <div className="bg-white rounded-2xl shadow-sm p-4">
               <div className="grid grid-cols-6 mb-1">
                 {['月','火','水','木','金','土'].map((d, i) => (
-                  <div key={d} className={`text-center text-xs font-bold py-2 ${i===5?'text-blue-500':'text-gray-500'}`}>{d}</div>
+                  <div key={d} className={`text-center text-xs font-bold py-2 ${i===5?'text-blue-500':'text-black'}`}>{d}</div>
                 ))}
               </div>
               <div className="grid grid-cols-6 gap-1">
@@ -750,15 +750,15 @@ function SummerScheduleInner() {
                   return (
                     <button key={i} disabled={!inS} onClick={() => { if (inS) { setCurrent(d); setView('week') } }}
                       className={`relative aspect-square flex flex-col items-center justify-center rounded-xl text-sm font-medium transition-colors
-                        ${!inS ? 'text-gray-200' : isToday ? 'bg-blue-600 text-white' :
-                          dow===6 ? 'text-blue-500 hover:bg-blue-50' : 'text-gray-700 hover:bg-gray-100'}`}>
+                        ${!inS ? 'text-black' : isToday ? 'bg-blue-600 text-white' :
+                          dow===6 ? 'text-blue-500 hover:bg-blue-50' : 'text-black hover:bg-gray-100'}`}>
                       {d.getDate()}
                       {has && inS && <span className={`absolute bottom-1 w-1.5 h-1.5 rounded-full ${isToday ? 'bg-white' : 'bg-teal-500'}`} />}
                     </button>
                   )
                 })}
               </div>
-              <p className="text-xs text-gray-400 mt-3 text-center">
+              <p className="text-xs text-black mt-3 text-center">
                 日付をタップすると週ビューに切り替わります{submittedDates.size > 0 ? '（● = 選択済）' : ''}
               </p>
             </div>
@@ -769,7 +769,7 @@ function SummerScheduleInner() {
         {view === 'day' && (() => {
           const dow = current.getDay()
           if (dow === 0) return (
-            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-gray-400 text-sm">
+            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-black text-sm">
               日曜日は授業がありません
             </div>
           )
@@ -784,7 +784,7 @@ function SummerScheduleInner() {
                   <button key={slot} onClick={() => toggleCell(current, slot)} disabled={full && !lesson}
                     className={`w-full flex items-center gap-4 px-5 py-4 border-b border-gray-100 text-left transition-colors active:opacity-70
                       ${lesson ? 'bg-teal-50' : full ? 'bg-red-50 cursor-not-allowed' : sel ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
-                    <span className="text-sm font-medium text-gray-500 w-14 flex-shrink-0">{slot}</span>
+                    <span className="text-sm font-medium text-black w-14 flex-shrink-0">{slot}</span>
                     <div className={`flex-1 h-2.5 rounded-full ${lesson ? 'bg-teal-400' : full ? 'bg-red-200' : sel ? 'bg-blue-400' : 'bg-gray-100'}`} />
                     {lesson && <span className="text-xs font-semibold text-teal-600 flex-shrink-0">選択済 ✕</span>}
                     {!lesson && full && <span className="text-xs font-semibold text-red-500 flex-shrink-0">満席</span>}
@@ -832,21 +832,21 @@ function SummerScheduleInner() {
           <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
             <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
               <div className="p-5 space-y-4">
-                <h2 className="text-base font-bold text-gray-800">選択済みの日時</h2>
+                <h2 className="text-base font-bold text-black">選択済みの日時</h2>
                 <div className="bg-teal-50 rounded-xl p-4 space-y-1">
                   <div className="text-sm font-semibold text-teal-700">{dateStr}</div>
                   <div className="text-lg font-bold text-teal-800">{timeStr}</div>
                 </div>
                 {!cancelConfirm ? (
                   <>
-                    <p className="text-sm text-gray-500">変更する場合は、この申込みをキャンセルしてから新しい日時を選んでください。</p>
+                    <p className="text-sm text-black">変更する場合は、この申込みをキャンセルしてから新しい日時を選んでください。</p>
                     <div className="space-y-2">
                       <button onClick={() => setCancelConfirm(true)}
                         className="w-full bg-red-50 text-red-600 border-2 border-red-200 py-3 rounded-xl text-sm font-bold active:bg-red-100">
                         キャンセルして変更する
                       </button>
                       <button onClick={() => { setCancelModal(null); setCancelConfirm(false) }}
-                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200">
+                        className="w-full bg-gray-100 text-black py-3 rounded-xl text-sm font-medium active:bg-gray-200">
                         このままにする
                       </button>
                     </div>
@@ -863,7 +863,7 @@ function SummerScheduleInner() {
                         はい、キャンセルします
                       </button>
                       <button onClick={() => setCancelConfirm(false)}
-                        className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200">
+                        className="w-full bg-gray-100 text-black py-3 rounded-xl text-sm font-medium active:bg-gray-200">
                         やめる
                       </button>
                     </div>

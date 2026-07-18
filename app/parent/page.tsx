@@ -13,7 +13,7 @@ export default function SummerParentPage() {
     setStudent(s)
   }, [router])
 
-  if (!student) return <div className="min-h-screen flex items-center justify-center text-gray-400">読み込み中...</div>
+  if (!student) return <div className="min-h-screen flex items-center justify-center text-black">読み込み中...</div>
 
   const menus = [
     { label: '欠席・遅刻を連絡する', sub: '欠席・遅刻・振替希望の連絡', emoji: '📢', href: '/parent/absence',         bg: 'bg-orange-500', shadow: 'shadow-orange-100' },
@@ -26,11 +26,11 @@ export default function SummerParentPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-100 px-5 py-4 flex items-center justify-between sticky top-0 z-10">
         <div>
-          <h1 className="text-lg font-bold text-gray-800">☀️ 夏期講習</h1>
-          <p className="text-xs text-gray-400 mt-0.5">{student.full_name} さん</p>
+          <h1 className="text-lg font-bold text-black">☀️ 夏期講習</h1>
+          <p className="text-xs text-black mt-0.5">{student.full_name} さん</p>
         </div>
         <button onClick={() => { clearSession(); router.replace('/login') }}
-          className="text-sm text-gray-400 border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors">
+          className="text-sm text-black border border-gray-200 px-4 py-2 rounded-lg hover:bg-gray-50 active:bg-gray-100 transition-colors">
           ログアウト
         </button>
       </header>
@@ -38,8 +38,8 @@ export default function SummerParentPage() {
       <main className="px-4 py-8 max-w-2xl mx-auto">
         <div className="text-center mb-8">
           <div className="text-4xl mb-2">☀️</div>
-          <h2 className="text-xl font-bold text-gray-800">2026年 夏期講習</h2>
-          <p className="text-sm text-gray-400 mt-1">7月20日（月）〜 8月29日（土）</p>
+          <h2 className="text-xl font-bold text-black">2026年 夏期講習</h2>
+          <p className="text-sm text-black mt-1">7月20日（月）〜 8月29日（土）</p>
         </div>
 
         {/* コース申込み導線 */}
@@ -47,10 +47,10 @@ export default function SummerParentPage() {
           className="w-full mb-6 bg-white border-2 border-blue-200 rounded-2xl shadow-sm px-6 py-5 flex items-center gap-4 active:scale-[0.98] hover:shadow-md transition-all text-left">
           <div className="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0">🎒</div>
           <div className="flex-1 min-w-0">
-            <div className="text-lg font-bold text-gray-800">夏期講習の授業を申込む</div>
-            <div className="text-sm text-gray-400 mt-0.5">コースを選んで日程を申込みます</div>
+            <div className="text-lg font-bold text-black">夏期講習の授業を申込む</div>
+            <div className="text-sm text-black mt-0.5">コースを選んで日程を申込みます</div>
           </div>
-          <span className="text-gray-300 text-2xl flex-shrink-0">›</span>
+          <span className="text-black text-2xl flex-shrink-0">›</span>
         </button>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -61,10 +61,10 @@ export default function SummerParentPage() {
                 {m.emoji}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-base font-bold text-gray-800">{m.label}</div>
-                <div className="text-sm text-gray-400 mt-0.5">{m.sub}</div>
+                <div className="text-base font-bold text-black">{m.label}</div>
+                <div className="text-sm text-black mt-0.5">{m.sub}</div>
               </div>
-              <span className="text-gray-300 text-xl flex-shrink-0">›</span>
+              <span className="text-black text-xl flex-shrink-0">›</span>
             </button>
           ))}
         </div>

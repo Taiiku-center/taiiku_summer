@@ -24,7 +24,7 @@ const STATUS_LABEL: Record<string, string> = { pending: '申請済', confirmed: 
 const STATUS_COLOR: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
   confirmed: 'bg-green-100 text-green-800',
-  cancelled: 'bg-gray-100 text-gray-500',
+  cancelled: 'bg-gray-100 text-black',
 }
 
 function formatDate(ds: string) {
@@ -109,10 +109,10 @@ export default function SummerAdminApplicationsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => router.push('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
+        <button onClick={() => router.push('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-black text-xl transition-colors">‹</button>
         <div className="flex-1">
-          <h1 className="text-base font-bold text-gray-800">コース申込み一覧</h1>
-          <p className="text-xs text-gray-400">夏期講習</p>
+          <h1 className="text-base font-bold text-black">コース申込み一覧</h1>
+          <p className="text-xs text-black">夏期講習</p>
         </div>
       </header>
 
@@ -132,7 +132,7 @@ export default function SummerAdminApplicationsPage() {
           ].map(s => (
             <div key={s.label} className={`${s.bg} rounded-2xl p-3 text-center`}>
               <div className={`text-2xl font-bold ${s.color}`}>{s.count}</div>
-              <div className="text-xs text-gray-500 mt-0.5">{s.label}</div>
+              <div className="text-xs text-black mt-0.5">{s.label}</div>
             </div>
           ))}
         </div>
@@ -141,16 +141,16 @@ export default function SummerAdminApplicationsPage() {
           {(['all', '在塾生', '小学生', '中学生'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors
-                ${filter === f ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+                ${filter === f ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-black hover:bg-gray-50'}`}>
               {f === 'all' ? 'すべて' : f}
             </button>
           ))}
         </div>
 
         {loading ? (
-          <div className="text-center text-gray-400 py-16">読み込み中...</div>
+          <div className="text-center text-black py-16">読み込み中...</div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-gray-400">コース申込みはまだありません</div>
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-black">コース申込みはまだありません</div>
         ) : filtered.map(app => {
           const ls = lessonsOf(app.id)
           const open = openId === app.id
@@ -160,26 +160,26 @@ export default function SummerAdminApplicationsPage() {
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded ${CAT_BADGE[app.course_category] || 'bg-gray-500'}`}>{app.course_category}</span>
-                    <span className="font-bold text-gray-800 truncate">{app.full_name}</span>
+                    <span className="font-bold text-black truncate">{app.full_name}</span>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[app.status] || 'bg-gray-100 text-gray-500'}`}>{STATUS_LABEL[app.status] || app.status}</span>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[app.status] || 'bg-gray-100 text-black'}`}>{STATUS_LABEL[app.status] || app.status}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-600">{app.required_hours > 0 ? app.course_name : ''}</span>
+                  <span className="text-sm text-black">{app.required_hours > 0 ? app.course_name : ''}</span>
                   <span className="text-sm font-bold text-blue-600">{app.required_hours > 0 ? `${app.total_hours}H／${app.required_hours}H` : `${app.total_hours}H（制限なし）`}</span>
                 </div>
-                <div className="text-xs text-gray-400 mt-1">日程 {ls.length}コマ　{open ? '▲ 閉じる' : '▼ 詳細を見る'}</div>
+                <div className="text-xs text-black mt-1">日程 {ls.length}コマ　{open ? '▲ 閉じる' : '▼ 詳細を見る'}</div>
               </button>
               {open && (
                 <div className="border-t border-gray-100 bg-gray-50 px-5 py-3 space-y-3">
                   {ls.length === 0 ? (
-                    <div className="text-sm text-gray-400 py-2">紐付く日程が見つかりません</div>
+                    <div className="text-sm text-black py-2">紐付く日程が見つかりません</div>
                   ) : (
                     <div className="space-y-1.5">
                       {ls.map(l => (
                         <div key={l.id} className="flex items-center justify-between text-sm">
-                          <span className="text-gray-600">{formatDate(l.date)}</span>
-                          <span className="font-medium text-gray-800">{l.start_time}〜{l.end_time || endTime(l.start_time)}</span>
+                          <span className="text-black">{formatDate(l.date)}</span>
+                          <span className="font-medium text-black">{l.start_time}〜{l.end_time || endTime(l.start_time)}</span>
                         </div>
                       ))}
                     </div>
@@ -198,37 +198,37 @@ export default function SummerAdminApplicationsPage() {
       {changeTarget && (
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-4">
-            <h2 className="text-base font-bold text-gray-800">コースを変更</h2>
-            <div className="text-sm text-gray-500">{changeTarget.full_name} さん</div>
+            <h2 className="text-base font-bold text-black">コースを変更</h2>
+            <div className="text-sm text-black">{changeTarget.full_name} さん</div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">区分</label>
+              <label className="block text-xs font-semibold text-black mb-1.5">区分</label>
               <div className="flex gap-2">
                 {(['在塾生', '小学生', '中学生'] as CourseCategory[]).map(cat => (
                   <button key={cat} onClick={() => { setChangeCategory(cat); setChangeCourseId(CATEGORY_COURSES[cat][0]?.id || '') }}
                     className={`flex-1 py-2 rounded-xl text-sm font-bold transition-colors
-                      ${changeCategory === cat ? `${CAT_BADGE[cat]} text-white` : 'bg-gray-100 text-gray-600'}`}>
+                      ${changeCategory === cat ? `${CAT_BADGE[cat]} text-white` : 'bg-gray-100 text-black'}`}>
                     {cat}
                   </button>
                 ))}
               </div>
             </div>
             <div>
-              <label className="block text-xs font-semibold text-gray-500 mb-1.5">コース</label>
+              <label className="block text-xs font-semibold text-black mb-1.5">コース</label>
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {CATEGORY_COURSES[changeCategory].map(c => (
                   <button key={c.id} onClick={() => setChangeCourseId(c.id)}
                     className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm transition-colors
-                      ${changeCourseId === c.id ? 'border-blue-500 bg-blue-50 font-bold text-blue-700' : 'border-gray-200 text-gray-600'}`}>
+                      ${changeCourseId === c.id ? 'border-blue-500 bg-blue-50 font-bold text-blue-700' : 'border-gray-200 text-black'}`}>
                     {c.unlimited ? changeCategory : `${c.name}（${c.hours}H${c.openEnded ? '〜' : ''}）`}
                   </button>
                 ))}
               </div>
             </div>
-            <div className="text-xs text-gray-400">これまでの申込み時間（{changeTarget.total_hours}H）は引き継がれます。</div>
+            <div className="text-xs text-black">これまでの申込み時間（{changeTarget.total_hours}H）は引き継がれます。</div>
             {changeError && <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-2.5 text-sm text-red-600 text-center font-medium">{changeError}</div>}
             <div className="flex gap-2">
               <button onClick={() => setChangeTarget(null)} disabled={changing}
-                className="flex-1 bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-40">キャンセル</button>
+                className="flex-1 bg-gray-100 text-black py-3 rounded-xl text-sm font-bold active:bg-gray-200 disabled:opacity-40">キャンセル</button>
               <button onClick={handleChangeCourse} disabled={changing}
                 className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold active:bg-blue-700 disabled:opacity-40">{changing ? '変更中...' : '変更する'}</button>
             </div>

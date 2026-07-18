@@ -28,13 +28,13 @@ export default function AdminLoginPage() {
       <div className="bg-white rounded-3xl shadow-xl p-8 w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🔒</div>
-          <h1 className="text-2xl font-bold text-gray-800">管理者ログイン</h1>
-          <p className="text-sm text-gray-400 mt-1">夏期講習 管理画面</p>
+          <h1 className="text-2xl font-bold text-black">管理者ログイン</h1>
+          <p className="text-sm text-black mt-1">夏期講習 管理画面</p>
         </div>
 
         <div className="space-y-5">
           <div>
-            <label className="block text-sm font-semibold text-gray-600 mb-2">管理者コード</label>
+            <label className="block text-sm font-semibold text-black mb-2">管理者コード</label>
             <input
               type="password"
               value={code}

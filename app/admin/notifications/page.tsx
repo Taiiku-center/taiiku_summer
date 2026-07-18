@@ -57,10 +57,10 @@ export default function SummerAdminNotificationsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center gap-3 sticky top-0 z-10">
-        <button onClick={() => router.push('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-500 text-xl transition-colors">‹</button>
+        <button onClick={() => router.push('/admin')} className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 text-black text-xl transition-colors">‹</button>
         <div className="flex-1">
-          <h1 className="text-base font-bold text-gray-800">通知一覧</h1>
-          <p className="text-xs text-gray-400">夏期講習</p>
+          <h1 className="text-base font-bold text-black">通知一覧</h1>
+          <p className="text-xs text-black">夏期講習</p>
         </div>
         {unread > 0 && (
           <button onClick={markAllRead}
@@ -83,9 +83,9 @@ export default function SummerAdminNotificationsPage() {
           </div>
         )}
         {loading ? (
-          <div className="text-center text-gray-400 py-10">読み込み中...</div>
+          <div className="text-center text-black py-10">読み込み中...</div>
         ) : notifs.length === 0 ? (
-          <div className="text-center text-gray-400 py-10">通知はありません</div>
+          <div className="text-center text-black py-10">通知はありません</div>
         ) : (
           notifs.map(n => (
             <div key={n.id}
@@ -94,15 +94,15 @@ export default function SummerAdminNotificationsPage() {
                 <div className="text-xl flex-shrink-0 mt-0.5">{TYPE_ICON[n.type] || '📌'}</div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5">
-                    <span className={`text-sm font-bold ${n.is_read ? 'text-gray-700' : 'text-gray-800'}`}>{n.title}</span>
+                    <span className={`text-sm font-bold ${n.is_read ? 'text-black' : 'text-black'}`}>{n.title}</span>
                     {!n.is_read && <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0" />}
                   </div>
-                  <p className="text-xs text-gray-500">{n.message}</p>
-                  <p className="text-xs text-gray-300 mt-1">{new Date(n.created_at).toLocaleString('ja-JP')}</p>
+                  <p className="text-xs text-black">{n.message}</p>
+                  <p className="text-xs text-black mt-1">{new Date(n.created_at).toLocaleString('ja-JP')}</p>
                 </div>
                 {!n.is_read && (
                   <button onClick={() => markRead(n.id)}
-                    className="flex-shrink-0 text-xs bg-white border border-gray-200 text-gray-600 px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
+                    className="flex-shrink-0 text-xs bg-white border border-gray-200 text-black px-2.5 py-1.5 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap">
                     既読
                   </button>
                 )}

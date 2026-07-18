@@ -463,7 +463,7 @@ export default function SummerAdminPage() {
   function DayDetail({ date }: { date: string }) {
     const slots = TIME_SLOTS.filter(slot => lessonsAt(date, slot).length > 0 || absencesAt(date, slot).length > 0)
     if (slots.length === 0) return (
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-gray-400">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 text-center text-black">
         この日の申込みはありません
       </div>
     )
@@ -475,7 +475,7 @@ export default function SummerAdminPage() {
           return (
             <div key={slot} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="bg-gray-50 border-b border-gray-100 px-4 py-2.5 flex items-center justify-between">
-                <span className="text-sm font-bold text-gray-700">{slot}〜{endTime(slot)}</span>
+                <span className="text-sm font-bold text-black">{slot}〜{endTime(slot)}</span>
                 <span className="text-xs text-blue-600 font-semibold">{sL.length}名</span>
               </div>
               <div className="divide-y divide-gray-50">
@@ -487,11 +487,11 @@ export default function SummerAdminPage() {
                       <div className="flex items-center gap-2.5 min-w-0">
                         <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${sc.dot}`} />
                         <div>
-                          <div className="text-sm font-bold text-gray-800">{l.full_name}</div>
+                          <div className="text-sm font-bold text-black">{l.full_name}</div>
                           {abs && <div className="text-xs text-orange-600 mt-0.5">⚠ {abs.type}・振替：{abs.make_up_request}</div>}
                         </div>
                       </div>
-                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_COLOR[l.status] || 'bg-gray-100 text-gray-600'}`}>
+                      <span className={`text-xs px-2.5 py-1 rounded-full font-semibold ${STATUS_COLOR[l.status] || 'bg-gray-100 text-black'}`}>
                         {STATUS_LABEL[l.status] || l.status}
                       </span>
                     </div>
@@ -518,8 +518,8 @@ export default function SummerAdminPage() {
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
         <div>
-          <h1 className="text-base font-bold text-gray-800">☀️ 夏期講習 管理</h1>
-          <p className="text-xs text-gray-400">{new Date().toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}</p>
+          <h1 className="text-base font-bold text-black">☀️ 夏期講習 管理</h1>
+          <p className="text-xs text-black">{new Date().toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}</p>
         </div>
         {notifs.length > 0 && (
           <button onClick={() => router.push('/admin/notifications')}
@@ -540,7 +540,7 @@ export default function SummerAdminPage() {
         ].map(l => (
           <button key={l.href} onClick={() => router.push(l.href)}
             className={`flex-shrink-0 text-sm px-3 py-1.5 rounded-lg font-medium transition-colors
-              ${l.active ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+              ${l.active ? 'bg-blue-600 text-white' : 'text-black hover:bg-gray-100'}`}>
             {l.label}
           </button>
         ))}
@@ -552,7 +552,7 @@ export default function SummerAdminPage() {
           {(['month', 'week', 'day'] as AdminView[]).map((v, i) => (
             <button key={v} onClick={() => setView(v)}
               className={`px-4 py-1.5 rounded-lg text-sm font-bold transition-colors
-                ${view === v ? 'bg-blue-600 text-white' : 'text-gray-500 hover:bg-gray-100'}`}>
+                ${view === v ? 'bg-blue-600 text-white' : 'text-black hover:bg-gray-100'}`}>
               {['月', '週', '日'][i]}
             </button>
           ))}
@@ -565,9 +565,9 @@ export default function SummerAdminPage() {
 
       {/* 生徒別カレンダー印刷 */}
       <div className="bg-white border-b border-gray-100 px-4 py-2 flex items-center gap-2 flex-wrap">
-        <span className="text-xs font-semibold text-gray-500">生徒別カレンダー</span>
+        <span className="text-xs font-semibold text-black">生徒別カレンダー</span>
         <select value={printStudentId} onChange={e => { setPrintStudentId(e.target.value); clearBulkSelection() }}
-          className="flex-1 min-w-[160px] max-w-xs text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700">
+          className="flex-1 min-w-[160px] max-w-xs text-sm border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-black">
           <option value="">生徒を選択…</option>
           {students.map(s => (
             <option key={s.id} value={s.id}>{s.name}</option>
@@ -589,10 +589,10 @@ export default function SummerAdminPage() {
       {printStudentId && (
         <div className="bg-white border-b border-gray-100 px-4 py-4 space-y-4">
           <div>
-            <div className="text-sm font-bold text-gray-800">
+            <div className="text-sm font-bold text-black">
               🗑 {students.find(s => s.id === printStudentId)?.name} さんの内容をまとめて削除
             </div>
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-xs text-black mt-0.5">
               削除したい授業日程・欠席連絡にチェックを入れて、下のボタンを押してください。
             </p>
           </div>
@@ -600,22 +600,22 @@ export default function SummerAdminPage() {
           {/* 授業日程 */}
           <div>
             <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
-              <span className="text-xs font-semibold text-gray-600">📅 授業日程（{bulkLessons.length}件）</span>
+              <span className="text-xs font-semibold text-black">📅 授業日程（{bulkLessons.length}件）</span>
               <div className="flex gap-3">
                 <button onClick={selectAllBulkLessons} className="text-xs text-blue-600 font-medium">全て選択</button>
-                <button onClick={() => setBulkSelectedLessons(new Set())} className="text-xs text-gray-400 font-medium">選択解除</button>
+                <button onClick={() => setBulkSelectedLessons(new Set())} className="text-xs text-black font-medium">選択解除</button>
               </div>
             </div>
             <div className="max-h-56 overflow-y-auto divide-y divide-gray-50 border border-gray-100 rounded-xl">
               {bulkLessons.length === 0 ? (
-                <div className="text-center text-gray-400 text-sm py-5">申込み済みの授業はありません</div>
+                <div className="text-center text-black text-sm py-5">申込み済みの授業はありません</div>
               ) : bulkLessons.map(l => (
                 <label key={l.id} className={`flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer transition-colors ${bulkSelectedLessons.has(l.id) ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
                   <input type="checkbox" checked={bulkSelectedLessons.has(l.id)} onChange={() => toggleBulkLesson(l.id)}
                     className="w-4 h-4 accent-red-500 flex-shrink-0" />
-                  <span className="text-gray-500 w-20 flex-shrink-0">{new Date(l.date + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</span>
-                  <span className="font-medium text-gray-800">{l.start_time}〜{l.end_time}</span>
-                  <span className="text-xs text-gray-400 ml-auto flex-shrink-0">{l.site}</span>
+                  <span className="text-black w-20 flex-shrink-0">{new Date(l.date + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</span>
+                  <span className="font-medium text-black">{l.start_time}〜{l.end_time}</span>
+                  <span className="text-xs text-black ml-auto flex-shrink-0">{l.site}</span>
                 </label>
               ))}
             </div>
@@ -624,21 +624,21 @@ export default function SummerAdminPage() {
           {/* 欠席・遅刻連絡 */}
           <div>
             <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
-              <span className="text-xs font-semibold text-gray-600">📢 欠席・遅刻連絡（{bulkAbsences.length}件）</span>
+              <span className="text-xs font-semibold text-black">📢 欠席・遅刻連絡（{bulkAbsences.length}件）</span>
               <div className="flex gap-3">
                 <button onClick={selectAllBulkAbsences} className="text-xs text-blue-600 font-medium">全て選択</button>
-                <button onClick={() => setBulkSelectedAbsences(new Set())} className="text-xs text-gray-400 font-medium">選択解除</button>
+                <button onClick={() => setBulkSelectedAbsences(new Set())} className="text-xs text-black font-medium">選択解除</button>
               </div>
             </div>
             <div className="max-h-56 overflow-y-auto divide-y divide-gray-50 border border-gray-100 rounded-xl">
               {bulkAbsences.length === 0 ? (
-                <div className="text-center text-gray-400 text-sm py-5">欠席・遅刻連絡はありません</div>
+                <div className="text-center text-black text-sm py-5">欠席・遅刻連絡はありません</div>
               ) : bulkAbsences.map(a => (
                 <label key={a.id} className={`flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer transition-colors ${bulkSelectedAbsences.has(a.id) ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
                   <input type="checkbox" checked={bulkSelectedAbsences.has(a.id)} onChange={() => toggleBulkAbsence(a.id)}
                     className="w-4 h-4 accent-red-500 flex-shrink-0" />
-                  <span className="text-gray-500 w-20 flex-shrink-0">{new Date(a.date + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</span>
-                  <span className="font-medium text-gray-800">{a.time}〜</span>
+                  <span className="text-black w-20 flex-shrink-0">{new Date(a.date + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric' })}</span>
+                  <span className="font-medium text-black">{a.time}〜</span>
                   <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ml-auto flex-shrink-0 ${a.type === '欠席' ? 'bg-orange-100 text-orange-700' : 'bg-yellow-100 text-yellow-700'}`}>{a.type}</span>
                 </label>
               ))}
@@ -665,7 +665,7 @@ export default function SummerAdminPage() {
           />
         </div>
         {loading ? (
-          <div className="text-center text-gray-400 py-16">読み込み中...</div>
+          <div className="text-center text-black py-16">読み込み中...</div>
         ) : (
           <>
             {/* ══ 月ビュー ══ */}
@@ -674,16 +674,16 @@ export default function SummerAdminPage() {
                 <div className="flex items-center justify-between mb-4">
                   <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1))}
                     disabled={!canPrevMonth}
-                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
-                  <span className="text-sm font-bold text-gray-700">{viewMonth.getFullYear()}年{viewMonth.getMonth() + 1}月</span>
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
+                  <span className="text-sm font-bold text-black">{viewMonth.getFullYear()}年{viewMonth.getMonth() + 1}月</span>
                   <button onClick={() => setViewMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1))}
                     disabled={!canNextMonth}
-                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
                 </div>
                 <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                   <div className="grid grid-cols-7 border-b border-gray-100">
                     {DOW.map((d, i) => (
-                      <div key={d} className={`text-center text-xs font-bold py-2 ${i === 6 ? 'text-red-500' : i === 5 ? 'text-blue-500' : 'text-gray-400'}`}>{d}</div>
+                      <div key={d} className={`text-center text-xs font-bold py-2 ${i === 6 ? 'text-red-500' : i === 5 ? 'text-blue-500' : 'text-black'}`}>{d}</div>
                     ))}
                   </div>
                   <div className="grid grid-cols-7 gap-px bg-gray-100">
@@ -700,7 +700,7 @@ export default function SummerAdminPage() {
                           className={`bg-white min-h-[56px] p-1.5 flex flex-col items-start hover:bg-blue-50 transition-colors text-left
                             ${isSel ? 'ring-2 ring-inset ring-blue-500' : ''}`}>
                           <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full
-                            ${isToday ? 'bg-blue-600 text-white' : dow === 0 ? 'text-red-500' : dow === 6 ? 'text-blue-500' : 'text-gray-700'}`}>
+                            ${isToday ? 'bg-blue-600 text-white' : dow === 0 ? 'text-red-500' : dow === 6 ? 'text-blue-500' : 'text-black'}`}>
                             {d.getDate()}
                           </span>
                           {count > 0 && <span className="mt-0.5 text-xs font-semibold text-blue-600">{count}名</span>}
@@ -716,11 +716,11 @@ export default function SummerAdminPage() {
             {view === 'week' && (
               <>
                 <div className="flex items-center justify-between mb-3">
-                  <button onClick={prevWeek} disabled={!canPrevWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
-                  <span className="text-sm font-bold text-gray-700">
+                  <button onClick={prevWeek} disabled={!canPrevWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
+                  <span className="text-sm font-bold text-black">
                     {weekDays[0].getMonth()+1}/{weekDays[0].getDate()} 〜 {weekDays[5].getMonth()+1}/{weekDays[5].getDate()}
                   </span>
-                  <button onClick={nextWeek} disabled={!canNextWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
+                  <button onClick={nextWeek} disabled={!canNextWeek} className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
                 </div>
 
                 <div className="flex gap-1.5 overflow-x-auto pb-1 mb-4">
@@ -735,7 +735,7 @@ export default function SummerAdminPage() {
                       <button key={ds} disabled={!inS} onClick={() => { setSelectedDate(ds); setSelectedCell(null) }}
                         className={`flex-shrink-0 flex flex-col items-center w-12 py-2 rounded-2xl transition-colors
                           ${!inS ? 'invisible pointer-events-none' : ''}
-                          ${isSel ? 'bg-blue-600 text-white shadow-md' : isToday ? 'bg-blue-50 text-blue-600' : 'bg-white border border-gray-200 text-gray-600'}`}>
+                          ${isSel ? 'bg-blue-600 text-white shadow-md' : isToday ? 'bg-blue-50 text-blue-600' : 'bg-white border border-gray-200 text-black'}`}>
                         <span className="text-xs font-medium">{dow}</span>
                         <span className="text-base font-bold">{d.getDate()}</span>
                         {count > 0 && <span className={`text-xs font-bold mt-0.5 ${isSel ? 'text-blue-100' : 'text-blue-600'}`}>{count}名</span>}
@@ -746,7 +746,7 @@ export default function SummerAdminPage() {
 
                 <div className="md:hidden">
                   <div className="flex items-center justify-between mb-2">
-                    <h2 className="text-sm font-bold text-gray-700">
+                    <h2 className="text-sm font-bold text-black">
                       {new Date(selectedDate + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' })}
                       <span className="text-blue-600 ml-2">{dailyCount(selectedDate)}名</span>
                     </h2>
@@ -758,7 +758,7 @@ export default function SummerAdminPage() {
                   <table className="w-full border-collapse min-w-[700px]">
                     <thead>
                       <tr>
-                        <th className="w-16 sticky left-0 bg-gray-50 z-10 border border-gray-200 text-xs text-gray-500 py-2 px-1">時間</th>
+                        <th className="w-16 sticky left-0 bg-gray-50 z-10 border border-gray-200 text-xs text-black py-2 px-1">時間</th>
                         {weekDays.map(d => {
                           const ds = toDateStr(d); const inS = inSummer(ds)
                           const count = dailyCount(ds); const isToday = ds === today
@@ -766,7 +766,7 @@ export default function SummerAdminPage() {
                           return (
                             <th key={ds} onClick={() => setSelectedDate(ds)}
                               className={`border border-gray-200 py-2 px-2 text-xs font-semibold cursor-pointer min-w-[140px]
-                                ${isToday ? 'bg-blue-50 text-blue-700' : selectedDate === ds ? 'bg-blue-600 text-white' : 'bg-gray-50 text-gray-600'}
+                                ${isToday ? 'bg-blue-50 text-blue-700' : selectedDate === ds ? 'bg-blue-600 text-white' : 'bg-gray-50 text-black'}
                                 ${!inS ? 'opacity-30' : ''}`}>
                               <div>{d.getMonth()+1}/{d.getDate()}（{dow}）</div>
                               {count > 0 && inS && <div className={`font-bold mt-0.5 ${selectedDate === ds ? 'text-white' : 'text-blue-600'}`}>{count}名</div>}
@@ -778,7 +778,7 @@ export default function SummerAdminPage() {
                     <tbody>
                       {TIME_SLOTS.map(slot => (
                         <tr key={slot}>
-                          <td className="sticky left-0 bg-white border border-gray-200 text-xs font-semibold text-gray-500 text-center py-1 px-1 z-10 whitespace-nowrap">{slot}</td>
+                          <td className="sticky left-0 bg-white border border-gray-200 text-xs font-semibold text-black text-center py-1 px-1 z-10 whitespace-nowrap">{slot}</td>
                           {weekDays.map(d => {
                             const ds = toDateStr(d); const inS = inSummer(ds)
                             const cL = lessonsAt(ds, slot); const cA = absencesAt(ds, slot)
@@ -816,10 +816,10 @@ export default function SummerAdminPage() {
                 {selectedCell && (lessonsAt(selectedCell.date, selectedCell.slot).length > 0 || absencesAt(selectedCell.date, selectedCell.slot).length > 0) && (
                   <div className="hidden md:block mt-3 bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
                     <div className="flex items-center justify-between mb-3">
-                      <h2 className="text-sm font-bold text-gray-700">
+                      <h2 className="text-sm font-bold text-black">
                         {new Date(selectedCell.date + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'numeric', day: 'numeric', weekday: 'short' })} {selectedCell.slot}〜{endTime(selectedCell.slot)}
                       </h2>
-                      <button onClick={() => setSelectedCell(null)} className="text-gray-400 hover:text-gray-600">✕</button>
+                      <button onClick={() => setSelectedCell(null)} className="text-black hover:text-black">✕</button>
                     </div>
                     <div className="space-y-2">
                       {lessonsAt(selectedCell.date, selectedCell.slot).map(l => {
@@ -829,10 +829,10 @@ export default function SummerAdminPage() {
                           <div key={l.id} className={`flex items-stretch gap-3 rounded-xl p-3 overflow-hidden relative ${sc.bg}`}>
                             <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${sc.bar}`} />
                             <div className="flex-1 pl-1.5">
-                              <div className="font-semibold text-gray-800 text-sm">{l.full_name}</div>
+                              <div className="font-semibold text-black text-sm">{l.full_name}</div>
                               {abs && <div className="text-xs text-orange-600 mt-0.5">{abs.type}・振替：{abs.make_up_request}{abs.note && `（${abs.note}）`}</div>}
                             </div>
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[l.status] || 'bg-gray-100 text-gray-600'}`}>{STATUS_LABEL[l.status] || l.status}</span>
+                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${STATUS_COLOR[l.status] || 'bg-gray-100 text-black'}`}>{STATUS_LABEL[l.status] || l.status}</span>
                           </div>
                         )
                       })}
@@ -847,13 +847,13 @@ export default function SummerAdminPage() {
               <>
                 <div className="flex items-center justify-between mb-4">
                   <button onClick={prevDay} disabled={!canPrevDay}
-                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
-                  <span className="text-sm font-bold text-gray-700">
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">‹</button>
+                  <span className="text-sm font-bold text-black">
                     {new Date(selectedDate + 'T00:00:00').toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
                     <span className="text-blue-600 ml-2">{dailyCount(selectedDate)}名</span>
                   </span>
                   <button onClick={nextDay} disabled={!canNextDay}
-                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-600 shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
+                    className="w-10 h-10 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-black shadow-sm text-lg hover:bg-gray-50 disabled:opacity-30">›</button>
                 </div>
                 <DayDetail date={selectedDate} />
               </>
@@ -866,7 +866,7 @@ export default function SummerAdminPage() {
         <div className="fixed inset-0 bg-black/50 flex items-end sm:items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm">
             <div className="p-5 space-y-4">
-              <h2 className="text-base font-bold text-gray-800">まとめて削除しますか？</h2>
+              <h2 className="text-base font-bold text-black">まとめて削除しますか？</h2>
               <div className="bg-red-50 rounded-xl px-4 py-3 text-sm text-red-700 font-medium text-center space-y-1">
                 <div>{students.find(s => s.id === printStudentId)?.name} さんの以下を削除します</div>
                 {bulkSelectedLessons.size > 0 && <div>・授業日程　{bulkSelectedLessons.size}件</div>}
@@ -882,7 +882,7 @@ export default function SummerAdminPage() {
                   {bulkCancelling ? '削除中...' : `はい、${bulkTotalSelected}件削除します`}
                 </button>
                 <button onClick={() => setBulkConfirm(false)} disabled={bulkCancelling}
-                  className="w-full bg-gray-100 text-gray-700 py-3 rounded-xl text-sm font-medium active:bg-gray-200 disabled:opacity-50">
+                  className="w-full bg-gray-100 text-black py-3 rounded-xl text-sm font-medium active:bg-gray-200 disabled:opacity-50">
                   やめる
                 </button>
               </div>
