@@ -342,8 +342,11 @@ function SummerScheduleInner() {
   function isBlocked(d: Date, slot: string) {
     const dow = d.getDay()
     if ((dow === 1 || dow === 4) && ['10:00', '10:30', '11:00', '11:30'].includes(slot)) return true
+    // 8/13〜8/15はお盆期間のため休塾日
+    const ds = toDateStr(d)
+    if (ds >= '2026-08-13' && ds <= '2026-08-15') return true
     // 8/22は模擬試験のため、昼から（13:00〜）の授業なし
-    if (toDateStr(d) === '2026-08-22' && slot >= '13:00') return true
+    if (ds === '2026-08-22' && slot >= '13:00') return true
     return false
   }
 
@@ -656,8 +659,9 @@ function SummerScheduleInner() {
         )}
 
         {view === 'week' && (
-          <div className="bg-amber-50 rounded-xl px-4 py-3 text-xs text-amber-700">
-            <span className="font-bold">月・木の10:00〜12:00</span>は授業がありません（斜線部分は選択不可）
+          <div className="bg-amber-50 rounded-xl px-4 py-3 text-xs text-amber-700 space-y-1">
+            <div><span className="font-bold">月・木の10:00〜12:00</span>は授業がありません（斜線部分は選択不可）</div>
+            <div><span className="font-bold">8月13日（木）〜8月15日（土）</span>は、お盆期間のため休塾日となります</div>
           </div>
         )}
 
@@ -771,6 +775,12 @@ function SummerScheduleInner() {
           if (dow === 0) return (
             <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-black text-sm">
               日曜日は授業がありません
+            </div>
+          )
+          const curDs = toDateStr(current)
+          if (curDs >= '2026-08-13' && curDs <= '2026-08-15') return (
+            <div className="bg-white rounded-2xl shadow-sm p-8 text-center text-black text-sm">
+              お盆期間（8月13日〜8月15日）は休塾日のため授業がありません
             </div>
           )
           const slots = TIME_SLOTS.filter(slot => !isBlocked(current, slot))
