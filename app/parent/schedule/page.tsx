@@ -138,8 +138,13 @@ function SummerScheduleInner() {
     return slotCounts[`${toDateStr(dateObj)}__${slot}`] || 0
   }
 
+  const FULL_TUESDAY_MORNINGS = ['2026-07-21', '2026-07-28', '2026-08-04']
+
   function isFull(dateObj: Date, slot: string) {
-    return !existingAt(dateObj, slot) && countAt(dateObj, slot) >= SLOT_CAPACITY
+    if (existingAt(dateObj, slot)) return false
+    // 特定の火曜日は午前中を満席扱いにする
+    if (FULL_TUESDAY_MORNINGS.includes(toDateStr(dateObj)) && ['10:00', '10:30', '11:00', '11:30'].includes(slot)) return true
+    return countAt(dateObj, slot) >= SLOT_CAPACITY
   }
 
   async function cancelLesson(id: string) {
