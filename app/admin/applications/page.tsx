@@ -3,15 +3,33 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '../../lib/supabase'
 import {
-  endTime, cleanupEmptyApplications, ELEMENTARY_COURSES, JUNIOR_COURSES, RESIDENT_COURSES,
+  endTime, cleanupEmptyApplications, lessonMinutes, SUMMER_START, SUMMER_END,
+  ELEMENTARY_COURSES, JUNIOR_COURSES, RESIDENT_COURSES,
   type SummerCourseApplication, type SummerLesson, type CourseCategory, type SummerCourse,
 } from '../../lib'
 import GuideBox from '../../components/GuideBox'
 
-const CAT_BADGE: Record<CourseCategory, string> = {
+type AdminCategory = CourseCategory | '高校生'
+
+const CAT_BADGE: Record<AdminCategory, string> = {
   '小学生': 'bg-emerald-500',
   '中学生': 'bg-indigo-500',
   '在塾生': 'bg-amber-500',
+  '高校生': 'bg-sky-500',
+}
+
+// 高校生（②）は「コースを選ぶ」機能がなく、予約した時間をそのまま集計した仮想エントリとして表示する
+type HsApp = {
+  id: string
+  student_id: string
+  full_name: string
+  course_category: '高校生'
+  course_name: ''
+  required_hours: 0
+  total_hours: number
+  status: 'confirmed'
+  created_at: string
+  synthetic: true
 }
 
 const CATEGORY_COURSES: Record<CourseCategory, SummerCourse[]> = {
@@ -35,8 +53,9 @@ export default function SummerAdminApplicationsPage() {
   const router = useRouter()
   const [apps, setApps]       = useState<SummerCourseApplication[]>([])
   const [lessons, setLessons] = useState<SummerLesson[]>([])
+  const [lessons2, setLessons2] = useState<SummerLesson[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter]   = useState<'all' | CourseCategory>('all')
+  const [filter, setFilter]   = useState<'all' | AdminCategory>('all')
   const [openId, setOpenId]   = useState<string | null>(null)
 
   const [changeTarget, setChangeTarget] = useState<SummerCourseApplication | null>(null)
@@ -49,12 +68,14 @@ export default function SummerAdminApplicationsPage() {
 
   async function fetchAll() {
     const supabase = createClient()
-    const [a, l] = await Promise.all([
+    const [a, l, l2] = await Promise.all([
       supabase.from('summer_course_applications').select('*').order('created_at', { ascending: false }),
       supabase.from('summer_lessons').select('*').not('application_id', 'is', null).neq('status', 'cancelled'),
+      supabase.from('summer_lessons2').select('*').gte('date', SUMMER_START).lte('date', SUMMER_END).neq('status', 'cancelled'),
     ])
     const allApps = a.data || []
     const allLessons = l.data || []
+    setLessons2(l2.data || [])
 
     // 授業が0件になった申込み（キャンセル等で孤立したもの）を自動整理
     const lessonAppIds = new Set(allLessons.map(x => x.application_id))
@@ -104,7 +125,31 @@ export default function SummerAdminApplicationsPage() {
     .filter(l => l.application_id === appId)
     .sort((x, y) => x.date < y.date ? -1 : x.date > y.date ? 1 : x.start_time < y.start_time ? -1 : 1)
 
-  const filtered = filter === 'all' ? apps : apps.filter(a => a.course_category === filter)
+  const lessonsOfHs = (studentId: string) => lessons2
+    .filter(l => l.student_id === studentId)
+    .sort((x, y) => x.date < y.date ? -1 : x.date > y.date ? 1 : x.start_time < y.start_time ? -1 : 1)
+
+  // ②（高校生）の予約を生徒ごとに集計した仮想エントリ。コース申込みの仕組みはないので、常に生成する
+  const hsApps: HsApp[] = (() => {
+    const byStudent = new Map<string, { full_name: string; minutes: number; latest: string }>()
+    for (const l of lessons2) {
+      const cur = byStudent.get(l.student_id) || { full_name: l.full_name, minutes: 0, latest: l.date }
+      cur.minutes += lessonMinutes(l.start_time, l.end_time)
+      if (l.date > cur.latest) cur.latest = l.date
+      byStudent.set(l.student_id, cur)
+    }
+    return Array.from(byStudent.entries())
+      .map(([student_id, v]) => ({
+        id: `hs-${student_id}`, student_id, full_name: v.full_name,
+        course_category: '高校生' as const, course_name: '' as const, required_hours: 0 as const,
+        total_hours: Math.round((v.minutes / 60) * 10) / 10, status: 'confirmed' as const,
+        created_at: v.latest, synthetic: true as const,
+      }))
+      .sort((a, b) => a.full_name < b.full_name ? -1 : a.full_name > b.full_name ? 1 : 0)
+  })()
+
+  const allEntries: (SummerCourseApplication | HsApp)[] = [...apps, ...hsApps]
+  const filtered = filter === 'all' ? allEntries : allEntries.filter(a => a.course_category === filter)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -120,15 +165,17 @@ export default function SummerAdminApplicationsPage() {
         <GuideBox
           bullets={[
             '小学生・中学生・在塾生の絞り込みでコース申込みを確認できます。',
+            '高校生（②）はコース申込みの仕組みがないため、予約時間を自動集計して表示しています。',
             'カードをタップすると、選択された日程の詳細が見られます。',
           ]}
         />
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {[
-            { label: '申込み総数', count: apps.length, color: 'text-blue-600', bg: 'bg-blue-50' },
+            { label: '申込み総数', count: apps.length + hsApps.length, color: 'text-blue-600', bg: 'bg-blue-50' },
             { label: '小学生', count: apps.filter(a => a.course_category === '小学生').length, color: 'text-emerald-600', bg: 'bg-emerald-50' },
             { label: '中学生', count: apps.filter(a => a.course_category === '中学生').length, color: 'text-indigo-600', bg: 'bg-indigo-50' },
             { label: '在塾生', count: apps.filter(a => a.course_category === '在塾生').length, color: 'text-amber-600', bg: 'bg-amber-50' },
+            { label: '高校生', count: hsApps.length, color: 'text-sky-600', bg: 'bg-sky-50' },
           ].map(s => (
             <div key={s.label} className={`${s.bg} rounded-2xl p-3 text-center`}>
               <div className={`text-2xl font-bold ${s.color}`}>{s.count}</div>
@@ -137,8 +184,8 @@ export default function SummerAdminApplicationsPage() {
           ))}
         </div>
 
-        <div className="flex gap-2">
-          {(['all', '在塾生', '小学生', '中学生'] as const).map(f => (
+        <div className="flex gap-2 flex-wrap">
+          {(['all', '在塾生', '小学生', '中学生', '高校生'] as const).map(f => (
             <button key={f} onClick={() => setFilter(f)}
               className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors
                 ${filter === f ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-black hover:bg-gray-50'}`}>
@@ -152,7 +199,8 @@ export default function SummerAdminApplicationsPage() {
         ) : filtered.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center text-black">コース申込みはまだありません</div>
         ) : filtered.map(app => {
-          const ls = lessonsOf(app.id)
+          const isHs = 'synthetic' in app
+          const ls = isHs ? lessonsOfHs(app.student_id) : lessonsOf(app.id)
           const open = openId === app.id
           return (
             <div key={app.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -162,10 +210,12 @@ export default function SummerAdminApplicationsPage() {
                     <span className={`text-[10px] font-bold text-white px-2 py-0.5 rounded ${CAT_BADGE[app.course_category] || 'bg-gray-500'}`}>{app.course_category}</span>
                     <span className="font-bold text-black truncate">{app.full_name}</span>
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[app.status] || 'bg-gray-100 text-black'}`}>{STATUS_LABEL[app.status] || app.status}</span>
+                  {!isHs && (
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full flex-shrink-0 ${STATUS_COLOR[app.status] || 'bg-gray-100 text-black'}`}>{STATUS_LABEL[app.status] || app.status}</span>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-black">{app.required_hours > 0 ? app.course_name : ''}</span>
+                  <span className="text-sm text-black">{!isHs && app.required_hours > 0 ? app.course_name : ''}</span>
                   <span className="text-sm font-bold text-blue-600">{app.required_hours > 0 ? `${app.total_hours}H／${app.required_hours}H` : `${app.total_hours}H（制限なし）`}</span>
                 </div>
                 <div className="text-xs text-black mt-1">日程 {ls.length}コマ　{open ? '▲ 閉じる' : '▼ 詳細を見る'}</div>
@@ -184,10 +234,12 @@ export default function SummerAdminApplicationsPage() {
                       ))}
                     </div>
                   )}
-                  <button onClick={() => openChangeModal(app)}
-                    className="w-full bg-white border border-blue-200 text-blue-600 font-bold py-2.5 rounded-xl text-sm active:bg-blue-50">
-                    コースを変更する
-                  </button>
+                  {!isHs && (
+                    <button onClick={() => openChangeModal(app)}
+                      className="w-full bg-white border border-blue-200 text-blue-600 font-bold py-2.5 rounded-xl text-sm active:bg-blue-50">
+                      コースを変更する
+                    </button>
+                  )}
                 </div>
               )}
             </div>
