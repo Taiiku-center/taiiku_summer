@@ -155,6 +155,17 @@ function SummerScheduleInner() {
     setCancelConfirm(false)
     await supabase.from('summer_lessons').delete().eq('id', id)
     if (target?.application_id) await cleanupEmptyApplications(supabase, [target.application_id])
+    if (target) {
+      const { dateStr, timeStr } = formatCancelInfo(target)
+      await supabase.from('summer_notifications').insert({
+        type: 'cancel', title: '夏期講習の申込みがキャンセルされました',
+        message: `${target.full_name}（${dateStr} ${timeStr}）`, is_read: false,
+      })
+      sendEmail(
+        `【キャンセル】${target.full_name} ${dateStr} ${timeStr}`,
+        `${target.full_name} さんが夏期講習の申込みをキャンセルしました。\n日程：${dateStr} ${timeStr}\n管理画面でご確認ください。`,
+      )
+    }
     setMsg('キャンセルしました。新しい日時を選んで申込みできます')
     setMsgIsError(false)
     setTimeout(() => setMsg(''), 5000)

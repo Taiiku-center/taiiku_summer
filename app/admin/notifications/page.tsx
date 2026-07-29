@@ -7,6 +7,7 @@ import GuideBox from '../../components/GuideBox'
 
 const TYPE_ICON: Record<string, string> = {
   lesson:  '📅',
+  cancel:  '🚫',
   absence: '❌',
   late:    '⏰',
   makeup:  '🔄',
@@ -15,6 +16,7 @@ const TYPE_ICON: Record<string, string> = {
 
 const TYPE_COLOR: Record<string, string> = {
   lesson:  'border-blue-200 bg-blue-50',
+  cancel:  'border-amber-200 bg-amber-50',
   absence: 'border-red-200 bg-red-50',
   late:    'border-orange-200 bg-orange-50',
   makeup:  'border-purple-200 bg-purple-50',

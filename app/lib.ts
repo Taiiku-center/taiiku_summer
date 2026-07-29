@@ -121,7 +121,7 @@ export type SummerBugReport = {
 
 export type SummerNotification = {
   id: string
-  type: 'lesson' | 'absence' | 'late' | 'makeup' | 'bug'
+  type: 'lesson' | 'cancel' | 'absence' | 'late' | 'makeup' | 'bug'
   title: string
   message: string
   is_read: boolean
